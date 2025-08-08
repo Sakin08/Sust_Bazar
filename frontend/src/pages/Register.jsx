@@ -1,20 +1,42 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShoppingBag, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Mail, Lock, User, AlertCircle, Phone, GraduationCap, Calendar, MapPin } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '',
+    department: '',
+    season: '',
+    address: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  // SUST departments
+  const departments = [
+    'CSE', 'EEE', 'ME', 'CE', 'ChE', 'IPE', 'MSE', 'PTE', 
+    'AGE', 'FMB', 'EST', 'SWE', 'BBA', 'English', 'Physics',
+    'Chemistry', 'Mathematics', 'Statistics', 'Geography'
+  ];
+
+  // Available seasons
+  const seasons = [
+    'Spring 2019', 'Summer 2019', 'Autumn 2019',
+    'Spring 2020', 'Summer 2020', 'Autumn 2020',
+    'Spring 2021', 'Summer 2021', 'Autumn 2021',
+    'Spring 2022', 'Summer 2022', 'Autumn 2022',
+    'Spring 2023', 'Summer 2023', 'Autumn 2023',
+    'Spring 2024', 'Summer 2024', 'Autumn 2024',
+    'Spring 2025', 'Summer 2025', 'Autumn 2025'
+  ];
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +50,7 @@ const Register = () => {
     setLoading(true);
     setError('');
 
+    // Frontend validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -40,7 +63,40 @@ const Register = () => {
       return;
     }
 
-    const result = await register(formData.name, formData.email, formData.password);
+    if (!formData.email.endsWith('@student.sust.edu')) {
+      setError('Please use your SUST student email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.phone || formData.phone.length < 10) {
+      setError('Please enter a valid phone number');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.department) {
+      setError('Please select your department');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.season) {
+      setError('Please select your season');
+      setLoading(false);
+      return;
+    }
+
+    // Call register with all required fields
+    const result = await register(
+      formData.name, 
+      formData.email, 
+      formData.password,
+      formData.phone,
+      formData.department,
+      formData.season,
+      formData.address
+    );
     
     if (result.success) {
       navigate('/');
@@ -81,7 +137,7 @@ const Register = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
+                Full Name *
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -102,7 +158,7 @@ const Register = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                SUST Email Address
+                SUST Email Address *
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -116,7 +172,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="your.name@student.sust.edu"
+                  placeholder="your.id@student.sust.edu"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -126,8 +182,97 @@ const Register = () => {
             </div>
 
             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number *
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="01712345678"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="department" className="block text-sm font-medium text-gray-700">
+                Department *
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <GraduationCap className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  id="department"
+                  name="department"
+                  required
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="season" className="block text-sm font-medium text-gray-700">
+                Season *
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  id="season"
+                  name="season"
+                  required
+                  value={formData.season}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">Select Season</option>
+                  {seasons.map(season => (
+                    <option key={season} value={season}>{season}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                Address (Optional)
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 pt-2 flex pointer-events-none">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                </div>
+                <textarea
+                  id="address"
+                  name="address"
+                  rows={2}
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Your address (optional)"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                Password *
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -141,7 +286,7 @@ const Register = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
+                  placeholder="At least 6 characters"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -149,7 +294,7 @@ const Register = () => {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                Confirm Password *
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

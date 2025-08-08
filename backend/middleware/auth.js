@@ -10,7 +10,7 @@ export const authenticate = async (req, res, next) => {
 
     const token = authHeader.replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+        
     const user = await User.findByPk(decoded.id);
     if (!user || user.is_banned) {
       return res.status(401).json({ message: 'Invalid token or user banned.' });

@@ -17,6 +17,7 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import chatRoutes from './routes/chats.js';
 import adminRoutes from './routes/admin.js';
+import userRoutes from './routes/users.js'; // ✅ Import user routes
 
 const app = express();
 const server = createServer(app);
@@ -34,10 +35,25 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes); // ✅ Fixed route path
+
+// Error handling middleware for multer
+app.use((error, req, res, next) => {
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'File size too large. Maximum size is 5MB.' });
+  }
+  if (error.message === 'Only image files are allowed!') {
+    return res.status(400).json({ message: error.message });
+  }
+  
+  console.error('Server error:', error);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
 
 // Socket.IO auth middleware
 io.use(async (socket, next) => {
@@ -105,19 +121,22 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('✅ Database connection established.');
 
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log('🔄 Database synchronized.');
 
     const adminEmail = 'admin@student.sust.edu';
     const admin = await User.findOne({ where: { email: adminEmail } });
     if (!admin) {
       await User.create({
-        name: 'Admin',
-        email: adminEmail,
-        password: 'admin123',
-        role: 'admin',
+        name: 'Admin User',
+        email: 'admin@student.sust.edu',
+        phone: '01712345678',
+        department: 'CSE',
+        season: 'Fall 2021',
+        password: '12345678',
+        role: 'admin'
       });
-      console.log('🛠️ Admin user created:', `${adminEmail} / admin123`);
+      console.log('🛠️ Admin user created:', `${adminEmail} / 12345678`);
     }
 
     const PORT = process.env.PORT || 3001;

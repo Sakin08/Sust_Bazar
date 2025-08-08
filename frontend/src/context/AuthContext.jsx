@@ -49,12 +49,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  // Updated register function with all required parameters
+  const register = async (name, email, password, phone, department, season, address) => {
     try {
+      console.log('Sending registration data:', { name, email, phone, department, season, address }); // Debug log
+      
       const response = await axios.post('http://localhost:3001/api/auth/register', {
         name,
         email,
-        password
+        password,
+        phone,
+        department,
+        season,
+        address
       });
 
       const { token, user: userData } = response.data;
@@ -66,6 +73,18 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true };
     } catch (error) {
+      console.error('Registration error:', error.response?.data); // Debug log
+      
+      // Handle validation errors specifically
+      if (error.response?.data?.errors) {
+        // If backend returns validation errors array
+        const errorMessages = error.response.data.errors.map(err => err.message).join(', ');
+        return { 
+          success: false, 
+          message: errorMessages 
+        };
+      }
+      
       return { 
         success: false, 
         message: error.response?.data?.message || 'Registration failed' 

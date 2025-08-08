@@ -8,6 +8,7 @@ const User = sequelize.define('User', {
     primaryKey: true,
     autoIncrement: true,
   },
+
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -15,6 +16,7 @@ const User = sequelize.define('User', {
       len: [2, 50],
     },
   },
+
   email: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -28,6 +30,30 @@ const User = sequelize.define('User', {
       },
     },
   },
+
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      is: /^[0-9]{10,15}$/, // 10–15 digits
+    },
+  },
+
+  department: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  season: {
+    type: DataTypes.STRING,
+    allowNull: false, // e.g. "Spring 2025"
+  },
+
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
   password: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -35,10 +61,12 @@ const User = sequelize.define('User', {
       len: [6, 100],
     },
   },
+
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',
   },
+
   is_banned: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -49,6 +77,7 @@ const User = sequelize.define('User', {
   updatedAt: 'updated_at',
 });
 
+// Hash password before creating
 User.beforeCreate(async (user) => {
   if (user.password) {
     const salt = await bcrypt.genSalt(10);
@@ -56,6 +85,7 @@ User.beforeCreate(async (user) => {
   }
 });
 
+// Method to compare passwords
 User.prototype.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };

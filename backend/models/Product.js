@@ -11,7 +11,7 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      len: [3, 100],
+      len: [2, 100], // Changed from [3, 100] to allow 2-character titles
     },
   },
   description: {
