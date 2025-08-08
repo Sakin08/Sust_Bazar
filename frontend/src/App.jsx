@@ -14,6 +14,7 @@ import MyProducts from './pages/MyProducts';
 import Chats from './pages/Chats';
 import ChatRoom from './pages/ChatRoom';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -34,6 +35,13 @@ function App() {
                 <PostProduct />
               </PrivateRoute>
             } />
+
+            <Route path="/profile" element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            } />
+
             <Route path="/my-products" element={
               <PrivateRoute>
                 <MyProducts />
