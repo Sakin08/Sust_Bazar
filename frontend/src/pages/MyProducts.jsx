@@ -25,6 +25,7 @@ const MyProducts = () => {
   const fetchMyProducts = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/products/my-products');
+      console.log('API Response:', response.data); // Debug log
       setProducts(response.data);
     } catch (error) {
       setError('Failed to fetch your products');
@@ -72,10 +73,29 @@ const MyProducts = () => {
   };
 
   const getImageUrl = (imageUrls) => {
-    if (imageUrls && imageUrls.length > 0) {
-      return `http://localhost:3001${imageUrls[0]}`;
+    console.log('Image URLs:', imageUrls); // Debug log
+    console.log('Type:', typeof imageUrls); // Debug log
+    
+    // Handle if imageUrls is a string (shouldn't be with your model getter)
+    let urls = imageUrls;
+    if (typeof imageUrls === 'string') {
+      try {
+        urls = JSON.parse(imageUrls);
+      } catch (e) {
+        console.error('Failed to parse image URLs:', e);
+        return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
+      }
     }
-    return `https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400`;
+    
+    // Check if we have valid URLs array
+    if (urls && Array.isArray(urls) && urls.length > 0 && urls[0]) {
+      console.log('Using Cloudinary URL:', urls[0]); // Debug log
+      // Don't add localhost - Cloudinary URLs are already complete!
+      return urls[0];
+    }
+    
+    // Fallback image
+    return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
   };
 
   if (loading) {
@@ -133,6 +153,10 @@ const MyProducts = () => {
                     src={getImageUrl(product.image_urls)}
                     alt={product.title}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', e.target.src);
+                      e.target.src = 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
+                    }}
                   />
                   <div className="absolute top-2 right-2 flex space-x-2">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${

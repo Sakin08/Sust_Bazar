@@ -29,6 +29,10 @@ const ProductDetail = () => {
   const fetchProduct = async () => {
     try {
       const response = await axios.get(`http://localhost:3001/api/products/${id}`);
+      console.log('=== PRODUCT DETAIL DEBUG ===');
+      console.log('Product data:', response.data);
+      console.log('Image URLs:', response.data.image_urls);
+      console.log('Image URLs type:', typeof response.data.image_urls);
       setProduct(response.data);
     } catch (error) {
       setError('Product not found');
@@ -73,10 +77,29 @@ const ProductDetail = () => {
   };
 
   const getImageUrl = (imageUrls, index = 0) => {
-    if (imageUrls && imageUrls.length > index) {
-      return `http://localhost:3001${imageUrls[index]}`;
+    console.log('Getting image URL for index:', index, 'from:', imageUrls);
+    
+    // Handle if imageUrls is a string (shouldn't be with your model getter)
+    let urls = imageUrls;
+    if (typeof imageUrls === 'string') {
+      try {
+        urls = JSON.parse(imageUrls);
+      } catch (e) {
+        console.error('Failed to parse image URLs:', e);
+        return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
+      }
     }
-    return `https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800`;
+    
+    // Check if we have valid URLs array
+    if (urls && Array.isArray(urls) && urls.length > index && urls[index]) {
+      console.log('Using Cloudinary URL:', urls[index]);
+      // Return Cloudinary URL directly - don't add localhost prefix!
+      return urls[index];
+    }
+    
+    // Fallback image
+    console.log('Using fallback image');
+    return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
   };
 
   if (loading) {
@@ -125,6 +148,10 @@ const ProductDetail = () => {
                   src={getImageUrl(product.image_urls, 0)}
                   alt={product.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Main image failed to load:', e.target.src);
+                    e.target.src = 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
+                  }}
                 />
               </div>
               
@@ -136,6 +163,10 @@ const ProductDetail = () => {
                         src={getImageUrl(product.image_urls, index + 1)}
                         alt={`${product.title} ${index + 2}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('Thumbnail failed to load:', e.target.src);
+                          e.target.src = 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
+                        }}
                       />
                     </div>
                   ))}
