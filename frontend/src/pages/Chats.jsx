@@ -30,11 +30,13 @@ const Chats = () => {
   };
 
   const getImageUrl = (imageUrls) => {
-    if (imageUrls && imageUrls.length > 0) {
-      return `http://localhost:3001${imageUrls[0]}`;
-    }
-    return `https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400`;
-  };
+  if (imageUrls && imageUrls.length > 0) {
+    // Assuming imageUrls is already an array of full URLs from backend
+    return imageUrls[0]; // Use directly, no prefixing
+  }
+  return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
+};
+
 
   const formatDate = (date) => {
     const messageDate = new Date(date);
