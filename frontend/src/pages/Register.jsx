@@ -87,16 +87,11 @@ const Register = () => {
       return;
     }
 
-    // Call register with all required fields
-    const result = await register(
-      formData.name, 
-      formData.email, 
-      formData.password,
-      formData.phone,
-      formData.department,
-      formData.season,
-      formData.address
-    );
+    // Remove confirmPassword before sending to backend
+    const { confirmPassword, ...registrationData } = formData;
+    
+    // Pass the entire formData object, not individual parameters
+    const result = await register(registrationData);
     
     if (result.success) {
       navigate('/');

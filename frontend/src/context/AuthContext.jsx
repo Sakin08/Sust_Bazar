@@ -69,10 +69,10 @@ const AuthProvider = (props) => {
   const updateUser = async (updatedData) => {
     try {
       const { data } = await axios.put(`${backendUrl}/api/users/profile`, updatedData);
-      if (data.success && data.user) {
+      if (data.user) {
         setUser(data.user);
         localStorage.setItem("user", JSON.stringify(data.user));
-        toast.success("Profile updated successfully");
+        toast.success(data.message || "Profile updated successfully");
         return { success: true };
       } else {
         toast.error(data.message || "Failed to update profile");
@@ -88,11 +88,11 @@ const AuthProvider = (props) => {
   // Login function
   const login = async (credentials) => {
     try {
-      const { data } = await axios.post(`${backendUrl}/api/auth/login`, credentials);
-      if (data.success) {
+      const { data } = await axios.post(`${backendUrl}/api/users/login`, credentials);
+      if (data.token && data.user) {
         setToken(data.token);
         setUser(data.user);
-        toast.success("Login successful");
+        toast.success(data.message || "Login successful");
         return { success: true };
       } else {
         toast.error(data.message || "Login failed");
@@ -108,11 +108,11 @@ const AuthProvider = (props) => {
   // Register function
   const register = async (userData) => {
     try {
-      const { data } = await axios.post(`${backendUrl}/api/auth/register`, userData);
-      if (data.success) {
+      const { data } = await axios.post(`${backendUrl}/api/users/register`, userData);
+      if (data.token && data.user) {
         setToken(data.token);
         setUser(data.user);
-        toast.success("Registration successful");
+        toast.success(data.message || "Registration successful");
         return { success: true };
       } else {
         toast.error(data.message || "Registration failed");

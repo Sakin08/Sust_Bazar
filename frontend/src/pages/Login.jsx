@@ -26,7 +26,8 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    const result = await login(formData.email, formData.password);
+    // Pass the entire formData object, not individual parameters
+    const result = await login(formData);
     
     if (result.success) {
       navigate('/');

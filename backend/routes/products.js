@@ -1,7 +1,7 @@
 import express from 'express';
-import multer from 'multer';
 import path from 'path';
-import { authenticate} from '../middleware/auth.js';
+import multer from 'multer';
+import { authenticate } from '../middleware/auth.js';
 import {
   getAllProducts,
   getProduct,
@@ -10,26 +10,14 @@ import {
   deleteProduct,
   getUserProducts,
 } from '../controllers/productController.js';
+import { memoryStorage, fileFilter } from '../middleware/multer.js';
 
 const router = express.Router();
 
-// Use memory storage for multer to get file buffers
-const storage = multer.memoryStorage();
-
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  },
+  storage: memoryStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter,
 });
 
 router.get('/', getAllProducts);

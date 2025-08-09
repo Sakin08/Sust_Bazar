@@ -8,9 +8,7 @@ export const getAllProducts = async (req, res) => {
     const offset = (page - 1) * limit;
 
     let whereClause = { is_sold: false };
-    if (category && category !== 'all') {
-      whereClause.category = category;
-    }
+    if (category && category !== 'all') whereClause.category = category;
     if (search) {
       whereClause[Op.or] = [
         { title: { [Op.like]: `%${search}%` } },
@@ -20,17 +18,12 @@ export const getAllProducts = async (req, res) => {
 
     const products = await Product.findAndCountAll({
       where: whereClause,
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'email']
-      }],
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }],
       order: [['created_at', 'DESC']],
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
 
-    // Since your model has getters, image_urls will already be parsed
     const productsWithParsedImages = products.rows.map(p => p.toJSON());
 
     res.json({
@@ -48,20 +41,11 @@ export const getAllProducts = async (req, res) => {
 export const getProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    
     const product = await Product.findByPk(id, {
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'email']
-      }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }]
     });
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // Model getter will handle parsing automatically
     res.json(product.toJSON());
   } catch (error) {
     console.error('Get product error:', error);
@@ -73,24 +57,16 @@ export const createProduct = async (req, res) => {
   try {
     const { title, description, price, category } = req.body;
     const seller_id = req.user.id;
-    
-    // Validate title length
-    if (!title || title.trim().length < 2) {
-      return res.status(400).json({ 
-        message: 'Title must be at least 2 characters long',
-        field: 'title'
-      });
-    }
-    
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: 'Please upload at least one image.' });
-    }
 
-    // Upload images to Cloudinary concurrently
+    if (!title || title.trim().length < 2)
+      return res.status(400).json({ message: 'Title must be at least 2 characters long', field: 'title' });
+
+    if (!req.files || req.files.length === 0)
+      return res.status(400).json({ message: 'Please upload at least one image.' });
+
     const uploadResults = await Promise.all(
       req.files.map(file => uploadBufferToCloudinary(file.buffer, 'products'))
     );
-
     const image_urls = uploadResults.map(result => result.secure_url);
 
     const product = await Product.create({
@@ -98,31 +74,21 @@ export const createProduct = async (req, res) => {
       description,
       price: parseFloat(price),
       category,
-      image_urls, // Model setter will handle JSON.stringify automatically
+      image_urls,
       seller_id
     });
 
-    res.status(201).json({
-      message: 'Product created successfully',
-      product: product.toJSON() // Getter will handle parsing automatically
-    });
+    res.status(201).json({ message: 'Product created successfully', product: product.toJSON() });
   } catch (error) {
     console.error('Create product error:', error);
-    
-    // Handle Sequelize validation errors specifically
     if (error.name === 'SequelizeValidationError') {
       const validationErrors = error.errors.map(err => ({
         field: err.path,
         message: err.message,
-        value: err.value
+        value: err.value,
       }));
-      
-      return res.status(400).json({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
-      });
+      return res.status(400).json({ message: 'Validation failed', errors: validationErrors });
     }
-    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -130,15 +96,11 @@ export const createProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    
     const product = await Product.findByPk(id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (product.seller_id !== req.user.id && req.user.role !== 'admin') {
+    if (product.seller_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Access denied' });
-    }
 
     await product.destroy();
     res.json({ message: 'Product deleted successfully' });
@@ -154,8 +116,6 @@ export const getUserProducts = async (req, res) => {
       where: { seller_id: req.user.id },
       order: [['created_at', 'DESC']]
     });
-
-    // Model getters will handle image_urls parsing automatically
     res.json(products.map(p => p.toJSON()));
   } catch (error) {
     console.error('Get user products error:', error);
@@ -169,16 +129,13 @@ export const updateProduct = async (req, res) => {
     const { title, description, price, category, is_sold } = req.body;
 
     const product = await Product.findByPk(id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (product.seller_id !== req.user.id && req.user.role !== 'admin') {
+    if (product.seller_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Access denied' });
-    }
 
-    // If new images are uploaded, upload them to Cloudinary
     let image_urls = product.image_urls; // getter returns parsed array
+
     if (req.files && req.files.length > 0) {
       const uploadResults = await Promise.all(
         req.files.map(file => uploadBufferToCloudinary(file.buffer, 'products'))
@@ -192,13 +149,10 @@ export const updateProduct = async (req, res) => {
       price: price !== undefined ? parseFloat(price) : product.price,
       category: category !== undefined ? category : product.category,
       is_sold: is_sold !== undefined ? is_sold : product.is_sold,
-      image_urls, // setter will handle JSON.stringify automatically
+      image_urls,
     });
 
-    res.json({
-      message: 'Product updated successfully',
-      product: product.toJSON(), // getter will handle parsing automatically
-    });
+    res.json({ message: 'Product updated successfully', product: product.toJSON() });
   } catch (error) {
     console.error('Update product error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

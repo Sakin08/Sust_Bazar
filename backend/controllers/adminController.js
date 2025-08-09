@@ -6,7 +6,6 @@ export const getAllUsers = async (req, res) => {
       attributes: ['id', 'name', 'email', 'role', 'is_banned', 'created_at'],
       order: [['created_at', 'DESC']]
     });
-
     res.json(users);
   } catch (error) {
     console.error('Get all users error:', error);
@@ -24,7 +23,6 @@ export const getAllProducts = async (req, res) => {
       }],
       order: [['created_at', 'DESC']]
     });
-
     res.json(products);
   } catch (error) {
     console.error('Get all products error:', error);
@@ -36,18 +34,14 @@ export const banUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const { banned } = req.body;
-    
     const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     if (user.role === 'admin') {
       return res.status(400).json({ message: 'Cannot ban admin users' });
     }
 
     await user.update({ is_banned: banned });
-    
     res.json({
       message: `User ${banned ? 'banned' : 'unbanned'} successfully`,
       user: {
@@ -66,11 +60,8 @@ export const banUser = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { productId } = req.params;
-    
     const product = await Product.findByPk(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
     await product.destroy();
     res.json({ message: 'Product deleted successfully' });
@@ -86,13 +77,7 @@ export const getStats = async (req, res) => {
     const totalProducts = await Product.count();
     const totalChats = await Chat.count();
     const totalMessages = await Message.count();
-
-    res.json({
-      totalUsers,
-      totalProducts,
-      totalChats,
-      totalMessages
-    });
+    res.json({ totalUsers, totalProducts, totalChats, totalMessages });
   } catch (error) {
     console.error('Get stats error:', error);
     res.status(500).json({ message: 'Server error' });
