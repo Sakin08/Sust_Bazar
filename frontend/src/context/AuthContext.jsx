@@ -1,115 +1,159 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+const AuthProvider = (props) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [user, setUser] = useState(
+    localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (token) {
+      localStorage.setItem("token", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+    }
+
+    if (user) localStorage.setItem("user", JSON.stringify(user));
+    else localStorage.removeItem("user");
+  }, [token, user]);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
     }
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  // Load user profile data from backend
+  const loadUserProfileData = async () => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
-        password
-      });
-
-      const { token, user: userData } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      setUser(userData);
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
-      };
-    }
-  };
-
-  // Updated register function with all required parameters
-  const register = async (name, email, password, phone, department, season, address) => {
-    try {
-      console.log('Sending registration data:', { name, email, phone, department, season, address }); // Debug log
-      
-      const response = await axios.post('http://localhost:3001/api/auth/register', {
-        name,
-        email,
-        password,
-        phone,
-        department,
-        season,
-        address
-      });
-
-      const { token, user: userData } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      setUser(userData);
-      return { success: true };
-    } catch (error) {
-      console.error('Registration error:', error.response?.data); // Debug log
-      
-      // Handle validation errors specifically
-      if (error.response?.data?.errors) {
-        // If backend returns validation errors array
-        const errorMessages = error.response.data.errors.map(err => err.message).join(', ');
-        return { 
-          success: false, 
-          message: errorMessages 
-        };
+      const { data } = await axios.get(`${backendUrl}/api/users/profile`);
+      if (data.user) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      } else {
+        toast.error("Failed to load user data");
       }
-      
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
-      };
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to load user data");
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
+  useEffect(() => {
+    if (token) loadUserProfileData();
+    else setUser(null);
+  }, [token]);
+
+  // Update user profile function
+  const updateUser = async (updatedData) => {
+    try {
+      const { data } = await axios.put(`${backendUrl}/api/users/profile`, updatedData);
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        toast.success("Profile updated successfully");
+        return { success: true };
+      } else {
+        toast.error(data.message || "Failed to update profile");
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || "Update failed";
+      toast.error(msg);
+      return { success: false, message: msg };
+    }
   };
 
-  const value = {
-    user,
-    login,
-    register,
-    logout,
-    loading
+  // Login function
+  const login = async (credentials) => {
+    try {
+      const { data } = await axios.post(`${backendUrl}/api/auth/login`, credentials);
+      if (data.success) {
+        setToken(data.token);
+        setUser(data.user);
+        toast.success("Login successful");
+        return { success: true };
+      } else {
+        toast.error(data.message || "Login failed");
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || "Login failed";
+      toast.error(msg);
+      return { success: false, message: msg };
+    }
+  };
+
+  // Register function
+  const register = async (userData) => {
+    try {
+      const { data } = await axios.post(`${backendUrl}/api/auth/register`, userData);
+      if (data.success) {
+        setToken(data.token);
+        setUser(data.user);
+        toast.success("Registration successful");
+        return { success: true };
+      } else {
+        toast.error(data.message || "Registration failed");
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || "Registration failed";
+      toast.error(msg);
+      return { success: false, message: msg };
+    }
+  };
+
+  // Logout function
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete axios.defaults.headers.common["Authorization"];
+    toast.success("Logged out successfully");
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        setToken,
+        setUser,
+        loading,
+        backendUrl,
+        loadUserProfileData,
+        updateUser,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {props.children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;
