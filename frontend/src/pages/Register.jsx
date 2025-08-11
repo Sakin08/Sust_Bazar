@@ -22,20 +22,9 @@ const Register = () => {
 
   // SUST departments
   const departments = [
-    'CSE', 'EEE', 'ME', 'CE', 'ChE', 'IPE', 'MSE', 'PTE', 
+    'CSE', 'EEE', 'ME', 'CE', 'ChE', 'IPE', 'MSE', 'PTE',
     'AGE', 'FMB', 'EST', 'SWE', 'BBA', 'English', 'Physics',
     'Chemistry', 'Mathematics', 'Statistics', 'Geography'
-  ];
-
-  // Available seasons
-  const seasons = [
-    'Spring 2019', 'Summer 2019', 'Autumn 2019',
-    'Spring 2020', 'Summer 2020', 'Autumn 2020',
-    'Spring 2021', 'Summer 2021', 'Autumn 2021',
-    'Spring 2022', 'Summer 2022', 'Autumn 2022',
-    'Spring 2023', 'Summer 2023', 'Autumn 2023',
-    'Spring 2024', 'Summer 2024', 'Autumn 2024',
-    'Spring 2025', 'Summer 2025', 'Autumn 2025'
   ];
 
   const handleChange = (e) => {
@@ -82,23 +71,22 @@ const Register = () => {
     }
 
     if (!formData.season) {
-      setError('Please select your season');
+      setError('Please enter your season');
       setLoading(false);
       return;
     }
 
     // Remove confirmPassword before sending to backend
     const { confirmPassword, ...registrationData } = formData;
-    
-    // Pass the entire formData object, not individual parameters
+
     const result = await register(registrationData);
-    
+
     if (result.success) {
       navigate('/');
     } else {
       setError(result.message);
     }
-    
+
     setLoading(false);
   };
 
@@ -130,6 +118,7 @@ const Register = () => {
           )}
 
           <div className="space-y-4">
+            {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Full Name *
@@ -151,6 +140,7 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 SUST Email Address *
@@ -167,7 +157,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="your.id@student.sust.edu"
+                  placeholder="Id@student.sust.edu"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -176,6 +166,7 @@ const Register = () => {
               </p>
             </div>
 
+            {/* Phone */}
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Phone Number *
@@ -191,12 +182,13 @@ const Register = () => {
                   required
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="01712345678"
+                  placeholder="01xxxxxxxxx"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
             </div>
 
+            {/* Department */}
             <div>
               <label htmlFor="department" className="block text-sm font-medium text-gray-700">
                 Department *
@@ -221,6 +213,7 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Season as text input */}
             <div>
               <label htmlFor="season" className="block text-sm font-medium text-gray-700">
                 Season *
@@ -229,22 +222,20 @@ const Register = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Calendar className="h-5 w-5 text-gray-400" />
                 </div>
-                <select
+                <input
                   id="season"
                   name="season"
+                  type="text"
                   required
                   value={formData.season}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                >
-                  <option value="">Select Season</option>
-                  {seasons.map(season => (
-                    <option key={season} value={season}>{season}</option>
-                  ))}
-                </select>
+                  placeholder="e.g., 2021-22"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
               </div>
             </div>
 
+            {/* Address */}
             <div>
               <label htmlFor="address" className="block text-sm font-medium text-gray-700">
                 Address (Optional)
@@ -265,6 +256,7 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password *
@@ -287,6 +279,7 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password *
@@ -310,6 +303,7 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Submit Button */}
           <div>
             <button
               type="submit"
@@ -324,6 +318,7 @@ const Register = () => {
             </button>
           </div>
 
+          {/* Login Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}

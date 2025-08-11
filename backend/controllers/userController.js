@@ -63,7 +63,7 @@ export const login = async (req, res) => {
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, password,profile_image } = req.body;
 
     const user = await User.findOne({ where: { email: email.toLowerCase().trim() } });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
@@ -86,6 +86,7 @@ export const login = async (req, res) => {
       address: user.address,
       role: user.role,
       created_at: user.created_at,
+       profile_image: user.profile_image, 
     };
 
     res.json({ message: 'Login successful', token, user: userResponse });

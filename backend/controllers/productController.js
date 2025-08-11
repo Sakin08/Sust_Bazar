@@ -18,7 +18,7 @@ export const getAllProducts = async (req, res) => {
 
     const products = await Product.findAndCountAll({
       where: whereClause,
-      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }],
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email','phone','season'] }],
       order: [['created_at', 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -38,11 +38,26 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+export const getUserProducts = async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: { seller_id: req.user.id },
+      order: [['created_at', 'DESC']],
+    });
+    res.json(products.map(p => p.toJSON()));
+  } catch (error) {
+    console.error('Get user products error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
 export const getProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await Product.findByPk(id, {
-      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email'] }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'email','phone','season','profile_image'] }]
     });
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
@@ -110,18 +125,31 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-export const getUserProducts = async (req, res) => {
+// controllers/productController.js
+
+export const getProductById = async (req, res) => {
   try {
-    const products = await Product.findAll({
-      where: { seller_id: req.user.id },
-      order: [['created_at', 'DESC']]
+    const product = await Product.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "name", "email", "phone", "department", "season","profile_image"]
+        }
+      ]
     });
-    res.json(products.map(p => p.toJSON()));
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
   } catch (error) {
-    console.error('Get user products error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching product:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const updateProduct = async (req, res) => {
   try {

@@ -3,7 +3,7 @@ import { User, Product, Chat, Message } from '../models/index.js';
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'name', 'email', 'role', 'is_banned', 'created_at'],
+      attributes: ['id', 'name', 'email','phone', 'role','department','season', 'profile_image','is_banned', 'created_at'],
       order: [['created_at', 'DESC']]
     });
     res.json(users);
@@ -19,7 +19,8 @@ export const getAllProducts = async (req, res) => {
       include: [{
         model: User,
         as: 'seller',
-        attributes: ['id', 'name', 'email']
+        attributes: ['id', 'name', 'email', 'phone', 'season', 'profile_image']
+
       }],
       order: [['created_at', 'DESC']]
     });

@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { 
-  MessageCircle, 
-  User, 
-  Calendar, 
-  DollarSign, 
+import {
+  MessageCircle,
+  User,
+  Calendar,
+  DollarSign,
   Tag,
   CheckCircle,
-  ArrowLeft 
+  ArrowLeft
 } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+  const { backendUrl } = useContext(AuthContext);
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
@@ -28,7 +29,7 @@ const ProductDetail = () => {
 
   const fetchProduct = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/products/${id}`);
+      const response = await axios.get(`${backendUrl}/api/products/${id}`);
       console.log('=== PRODUCT DETAIL DEBUG ===');
       console.log('Product data:', response.data);
       console.log('Image URLs:', response.data.image_urls);
@@ -49,10 +50,9 @@ const ProductDetail = () => {
 
     setChatLoading(true);
     try {
-      const response = await axios.post('http://localhost:3001/api/chats/create', {
+      const response = await axios.post(`${backendUrl}/api/chats/create`, {
         productId: product.id
       });
-      
       navigate(`/chat/${response.data.id}`);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to start chat');
@@ -78,8 +78,7 @@ const ProductDetail = () => {
 
   const getImageUrl = (imageUrls, index = 0) => {
     console.log('Getting image URL for index:', index, 'from:', imageUrls);
-    
-    // Handle if imageUrls is a string (shouldn't be with your model getter)
+
     let urls = imageUrls;
     if (typeof imageUrls === 'string') {
       try {
@@ -89,16 +88,11 @@ const ProductDetail = () => {
         return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
       }
     }
-    
-    // Check if we have valid URLs array
+
     if (urls && Array.isArray(urls) && urls.length > index && urls[index]) {
-      console.log('Using Cloudinary URL:', urls[index]);
-      // Return Cloudinary URL directly - don't add localhost prefix!
       return urls[index];
     }
-    
-    // Fallback image
-    console.log('Using fallback image');
+
     return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
   };
 
@@ -149,12 +143,10 @@ const ProductDetail = () => {
                   alt={product.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.error('Main image failed to load:', e.target.src);
                     e.target.src = 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=800';
                   }}
                 />
               </div>
-              
               {product.image_urls && product.image_urls.length > 1 && (
                 <div className="grid grid-cols-4 gap-2">
                   {product.image_urls.slice(1, 5).map((_, index) => (
@@ -164,7 +156,6 @@ const ProductDetail = () => {
                         alt={`${product.title} ${index + 2}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('Thumbnail failed to load:', e.target.src);
                           e.target.src = 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
                         }}
                       />
@@ -178,9 +169,7 @@ const ProductDetail = () => {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {product.title}
-                  </h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     <div className="flex items-center">
                       <Tag className="h-4 w-4 mr-1" />
@@ -211,21 +200,32 @@ const ProductDetail = () => {
 
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {product.description}
-                </p>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{product.description}</p>
               </div>
 
               {/* Seller Info */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h3>
                 <div className="flex items-center">
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3 overflow-hidden">
+                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3 overflow-hidden">
+  <img
+    src={product.seller?.profile_image || '/default-profile.png'}
+    alt={`${product.seller?.name}'s profile`}
+    className="h-8 w-8 object-cover rounded-full"
+    onError={(e) => {
+      e.target.onerror = null;
+      e.target.src = '/default-profile.png'; // fallback image if broken
+    }}
+  />
+</div>
+
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{product.seller?.name}</p>
                     <p className="text-sm text-gray-600">{product.seller?.email}</p>
+                    <p className="text-sm text-gray-600">Phone: {product.seller?.phone}</p>
+                    <p className="text-sm text-gray-600">season: {product.seller?.season}</p>
                   </div>
                 </div>
               </div>

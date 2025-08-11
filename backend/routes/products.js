@@ -4,7 +4,7 @@ import multer from 'multer';
 import { authenticate } from '../middleware/auth.js';
 import {
   getAllProducts,
-  getProduct,
+  getProductById,     // use this instead of getProduct
   createProduct,
   updateProduct,
   deleteProduct,
@@ -22,7 +22,7 @@ const upload = multer({
 
 router.get('/', getAllProducts);
 router.get('/my-products', authenticate, getUserProducts);
-router.get('/:id', getProduct);
+router.get('/:id', getProductById);  // <-- updated here
 router.post('/', authenticate, upload.array('images', 5), createProduct);
 router.put('/:id', authenticate, upload.array('images', 5), updateProduct);
 router.delete('/:id', authenticate, deleteProduct);
