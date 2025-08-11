@@ -47,21 +47,21 @@ const Navbar = () => {
             <Link
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-blue-600 bg-blue-50' 
+                isActive('/')
+                  ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-700 hover:text-blue-600'
               }`}
             >
               Browse
             </Link>
-            
+
             {user && (
               <>
                 <Link
                   to="/post"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/post') 
-                      ? 'text-blue-600 bg-blue-50' 
+                    isActive('/post')
+                      ? 'text-blue-600 bg-blue-50'
                       : 'text-gray-700 hover:text-blue-600'
                   }`}
                 >
@@ -71,8 +71,8 @@ const Navbar = () => {
                 <Link
                   to="/chats"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/chats') 
-                      ? 'text-blue-600 bg-blue-50' 
+                    isActive('/chats')
+                      ? 'text-blue-600 bg-blue-50'
                       : 'text-gray-700 hover:text-blue-600'
                   }`}
                 >
@@ -82,8 +82,8 @@ const Navbar = () => {
                 <Link
                   to="/my-products"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/my-products') 
-                      ? 'text-blue-600 bg-blue-50' 
+                    isActive('/my-products')
+                      ? 'text-blue-600 bg-blue-50'
                       : 'text-gray-700 hover:text-blue-600'
                   }`}
                 >
@@ -106,15 +106,27 @@ const Navbar = () => {
                     Admin
                   </Link>
                 )}
-                
+
                 {/* User Profile Dropdown */}
                 <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-blue-600" />
+                    <div className="h-8 w-8 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
+                      {user.profile_image ? (
+                        <img
+                          src={user.profile_image}
+                          alt="Profile"
+                          className="h-8 w-8 object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/default-profile.png'; // fallback image if broken
+                          }}
+                        />
+                      ) : (
+                        <User className="h-5 w-5 text-blue-600" />
+                      )}
                     </div>
                     <span className="hidden sm:block">{user.name}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -128,7 +140,7 @@ const Navbar = () => {
                         <p className="text-sm font-medium text-gray-900">{user.name}</p>
                         <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
-                      
+
                       {/* Profile Link */}
                       <Link
                         to="/profile"
@@ -138,10 +150,10 @@ const Navbar = () => {
                         <UserCircle className="h-4 w-4 mr-3" />
                         Profile
                       </Link>
-                      
+
                       {/* Divider */}
                       <div className="border-t border-gray-200 my-1"></div>
-                      
+
                       {/* Logout */}
                       <button
                         onClick={handleLogout}

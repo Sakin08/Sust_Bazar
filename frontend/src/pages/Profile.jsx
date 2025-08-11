@@ -43,11 +43,12 @@ const Profile = () => {
         phone: user.phone || '',
         address: user.address || '',
         department: user.department || '',
+        
         season: user.season || '',
       
       });
 
-      setImagePreview(user.profileImage || user.image || null);
+      setImagePreview(user.profile_image || user.image || null);
     }
   }, [user]);
 
