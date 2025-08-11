@@ -39,6 +39,11 @@ const User = sequelize.define('User', {
     },
   },
 
+  profile_image: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
   department: {
     type: DataTypes.STRING,
     allowNull: false,

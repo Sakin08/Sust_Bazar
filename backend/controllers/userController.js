@@ -1,11 +1,7 @@
 import cloudinary from '../config/cloudinary.js';
-import streamifier from 'streamifier';
+import { uploadBufferToCloudinary } from '../utils/cloudinaryUpload.js';
 import { User } from '../models/index.js';
-
-
-
 import jwt from 'jsonwebtoken';
-
 import { validationResult } from 'express-validator';
 
 export const register = async (req, res) => {
@@ -17,7 +13,6 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, phone, department, season, address } = req.body;
 
-    // Validate fields here (or rely on express-validator)
     // Check if user exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -100,7 +95,6 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -115,72 +109,38 @@ export const getProfile = async (req, res) => {
   }
 };
 
-export const updateProfile = async (req, res) => {
+export const updateUserProfile = async (req, res) => {
   try {
-    const { name, phone, department, season, address } = req.body;
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const userId = req.user.id; // from JWT authenticate middleware
+    const { name, phone, department, season, address, bio } = req.body;
 
-    await user.update({
-      name: name !== undefined ? name.trim() : user.name,
-      phone: phone !== undefined ? phone.trim() : user.phone,
-      department: department !== undefined ? department.trim() : user.department,
-      season: season !== undefined ? season.trim() : user.season,
-      address: address !== undefined ? address.trim() : user.address,
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Prepare update data
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (phone) updateData.phone = phone.trim();
+    if (department) updateData.department = department.trim();
+    if (season) updateData.season = season.trim();
+    if (address !== undefined) updateData.address = address.trim();
+
+    // Handle image upload if file exists
+    if (req.file && req.file.buffer) {
+      const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'profile_images');
+      updateData.profile_image = uploadResult.secure_url;
+    }
+
+    await user.update(updateData);
+
+    // Return updated user excluding password
+    const updatedUser = await User.findByPk(userId, {
+      attributes: { exclude: ['password'] },
     });
 
-    res.json({ message: 'Profile updated successfully', user });
+    res.json({ success: true, message: 'Profile updated successfully', user: updatedUser });
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-export const uploadProfileImage = async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: 'No image file provided' });
-
-  try {
-    const uploadFromBuffer = (buffer) => {
-      return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: 'profiles' },
-          (error, result) => {
-            if (result) resolve(result);
-            else reject(error);
-          }
-        );
-        streamifier.createReadStream(buffer).pipe(stream);
-      });
-    };
-
-    const result = await uploadFromBuffer(req.file.buffer);
-
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Optional: delete old image from Cloudinary here using public_id if needed
-
-    await user.update({ profile_image: result.secure_url });
-
-    res.json({ message: 'Profile image uploaded successfully', imageUrl: result.secure_url, user, success: true });
-  } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    res.status(500).json({ message: 'Failed to upload image', success: false });
-  }
-};
-
-export const deleteProfileImage = async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Optional: Delete image from Cloudinary here using public_id if stored
-
-    await user.update({ profile_image: null });
-
-    res.json({ message: 'Profile image deleted successfully' });
-  } catch (error) {
-    console.error('Delete profile image error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Profile update error:', error);
+    res.status(500).json({ success: false, message: 'Server error during profile update' });
   }
 };

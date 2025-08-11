@@ -1,6 +1,6 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, updateProfile, uploadProfileImage, deleteProfileImage } from '../controllers/userController.js';
+import { register, login, getProfile, updateUserProfile } from '../controllers/userController.js';
 import { authenticate } from '../middleware/auth.js';
 import multer from 'multer';
 
@@ -48,8 +48,6 @@ router.post('/login', loginValidation, login);
 
 // Protected user routes
 router.get('/profile', authenticate, getProfile);
-router.put('/profile', authenticate, updateProfile);
-router.post('/upload-profile-image', authenticate, upload.single('profileImage'), uploadProfileImage);
-router.delete('/profile-image', authenticate, deleteProfileImage);
+router.put("/update-profile", authenticate, upload.single("image"), updateUserProfile);
 
 export default router;
