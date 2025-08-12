@@ -17,27 +17,29 @@ const MyItems = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchMyItems();
-  }, []);
-
   const fetchMyItems = async () => {
     try {
       setLoading(true);
       setError('');
+
       const [productsRes, accommodationsRes] = await Promise.all([
         axios.get('http://localhost:3001/api/products/my-products', { withCredentials: true }),
         axios.get('http://localhost:3001/api/accommodations/my-accommodations', { withCredentials: true }),
       ]);
+
       setProducts(productsRes.data || []);
       setAccommodations(accommodationsRes.data || []);
     } catch (error) {
       console.error('Fetch My Items error:', error);
-      setError('Failed to fetch your items');
+      setError(error.response?.data?.message || 'Failed to fetch your items. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchMyItems();
+  }, []);
 
   const handleToggleSold = async (productId, currentStatus) => {
     try {
@@ -112,7 +114,6 @@ const MyItems = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">My Items</h1>
@@ -255,7 +256,7 @@ const MyItems = () => {
                         <span>{formatDate(acc.createdAt || acc.created_at)}</span>
                       </div>
                     </div>
-                                        <div className="flex space-x-2">
+                    <div className="flex space-x-2">
                       <Link
                         to={`/accommodation/${acc.id}`}
                         className="flex-1 px-3 py-2 text-center text-sm font-medium text-purple-600 border border-purple-600 rounded-md hover:bg-purple-50 transition-colors"
@@ -281,4 +282,3 @@ const MyItems = () => {
 };
 
 export default MyItems;
-

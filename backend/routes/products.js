@@ -1,10 +1,9 @@
 import express from 'express';
-import path from 'path';
 import multer from 'multer';
 import { authenticate } from '../middleware/auth.js';
 import {
   getAllProducts,
-  getProductById,     // use this instead of getProduct
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -21,11 +20,13 @@ const upload = multer({
   fileFilter,
 });
 
+// Place '/my-products' BEFORE '/:id'
 router.get('/', getAllProducts);
-router.get('/my-products', authenticate, getUserProducts);
-router.get('/:id', getProductById);  // <-- updated here
+router.get('/my-products', authenticate, getMyProducts);
+router.get('/:id', getProductById);
+
 router.post('/', authenticate, upload.array('images', 5), createProduct);
 router.put('/:id', authenticate, upload.array('images', 5), updateProduct);
 router.delete('/:id', authenticate, deleteProduct);
-router.get('/my', authenticate, getMyProducts);
+
 export default router;

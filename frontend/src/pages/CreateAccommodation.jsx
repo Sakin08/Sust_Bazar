@@ -45,7 +45,7 @@ export default function CreateAccommodation() {
 
       const res = await createAccommodation(formData, true);
       alert('Listing created');
-      navigate(`/accommodations/${res.data.id}`);
+      navigate(`/my-products`);
     } catch (error) {
       console.error(error);
       alert('Failed to create listing');

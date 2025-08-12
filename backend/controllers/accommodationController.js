@@ -36,7 +36,7 @@ export const createAccommodation = async (req, res) => {
     }
 
     const listing = await Accommodation.create({
-      owner_id: req.user.id,
+      userId: req.user.id, // Changed from owner_id to userId
       type,
       title,
       description,
@@ -50,11 +50,9 @@ export const createAccommodation = async (req, res) => {
     res.status(201).json(listing);
   } catch (error) {
     console.error('Create Accommodation error:', error);
-    res.status(500).json({ error: 'Failed to create listing' });
+    res.status(500).json({ error: 'Failed to create listing', details: error.message });
   }
 };
-
-// Add these missing exports:
 
 // Get all available listings
 export const getAccommodations = async (req, res) => {
@@ -64,7 +62,8 @@ export const getAccommodations = async (req, res) => {
     });
     res.json(listings);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch listings' });
+    console.error('Get Accommodations error:', error);
+    res.status(500).json({ error: 'Failed to fetch listings', details: error.message });
   }
 };
 
@@ -75,7 +74,8 @@ export const getAccommodationById = async (req, res) => {
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
     res.json(listing);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch listing' });
+    console.error('Get Accommodation by ID error:', error);
+    res.status(500).json({ error: 'Failed to fetch listing', details: error.message });
   }
 };
 
@@ -90,7 +90,8 @@ export const bookAccommodation = async (req, res) => {
     });
     res.status(201).json(booking);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to book accommodation' });
+    console.error('Book Accommodation error:', error);
+    res.status(500).json({ error: 'Failed to book accommodation', details: error.message });
   }
 };
 
@@ -109,27 +110,28 @@ export const updateBookingStatus = async (req, res) => {
 
     res.json({ message: `Booking ${status} successfully` });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update booking' });
+    console.error('Update Booking Status error:', error);
+    res.status(500).json({ error: 'Failed to update booking', details: error.message });
   }
 };
+
+// Get my accommodations
 export const getMyAccommodations = async (req, res) => {
   try {
-    if (!req.user) {
-      console.error('No user in request!');
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User not authenticated.' });
     }
 
     const userId = req.user.id;
-    console.log('Fetching accommodations for user:', userId);
 
     const accommodations = await Accommodation.findAll({
-      where: { owner_id: userId },
-      order: [['createdAt', 'DESC']],
+      where: { userId: userId }, // Changed from owner_id to userId
+      logging: console.log, // Log SQL query for debugging
     });
 
     res.json(accommodations);
   } catch (error) {
-    console.error('Error fetching my accommodations:', error);
-    res.status(500).json({ error: 'Failed to fetch accommodations' });
+    console.error('getMyAccommodations server error:', error);
+    res.status(500).json({ message: 'Failed to get accommodations due to a server error.', details: error.message });
   }
 };
