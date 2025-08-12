@@ -186,3 +186,17 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
+export const getMyProducts = async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: { seller_id: req.user.id },  // Use seller_id here
+      order: [['created_at', 'DESC']],    // optional: order by creation date desc
+    });
+    res.json(products);
+  } catch (error) {
+    console.error('Get My Products error:', error);
+    res.status(500).json({ error: 'Failed to fetch your products' });
+  }
+};

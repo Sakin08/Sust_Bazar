@@ -9,6 +9,7 @@ import {
   updateProduct,
   deleteProduct,
   getUserProducts,
+  getMyProducts,
 } from '../controllers/productController.js';
 import { memoryStorage, fileFilter } from '../middleware/multer.js';
 
@@ -26,5 +27,5 @@ router.get('/:id', getProductById);  // <-- updated here
 router.post('/', authenticate, upload.array('images', 5), createProduct);
 router.put('/:id', authenticate, upload.array('images', 5), updateProduct);
 router.delete('/:id', authenticate, deleteProduct);
-
+router.get('/my', authenticate, getMyProducts);
 export default router;

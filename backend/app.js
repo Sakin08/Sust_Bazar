@@ -8,6 +8,7 @@ import productRoutes from './routes/products.js';
 import chatRoutes from './routes/chats.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/users.js';
+import accommodationRoutes from './routes/accommodation.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +29,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('/api/accommodations', accommodationRoutes);
 // Error handling middleware for multer and others
 app.use((error, req, res, next) => {
   if (error.code === 'LIMIT_FILE_SIZE') {

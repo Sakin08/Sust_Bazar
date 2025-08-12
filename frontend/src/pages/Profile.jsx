@@ -25,7 +25,7 @@ const Profile = () => {
     address: '',
     department: '',
     season: '',
-    bio: '',
+    
   });
   const [isLoading, setIsLoading] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState(null);
