@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import sequelize from '../config/database.js'; // make sure this path is correct
 
 const Chat = sequelize.define('Chat', {
   id: {
@@ -9,9 +9,17 @@ const Chat = sequelize.define('Chat', {
   },
   product_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,  // <-- nullable now
     references: {
       model: 'Products',
+      key: 'id',
+    },
+  },
+  accommodation_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // <-- nullable now
+    references: {
+      model: 'Accommodations',
       key: 'id',
     },
   },
