@@ -172,30 +172,40 @@ const AccommodationDetail = () => {
               </div>
 
               {/* Chat Button */}
-              {user && user.id !== listing.owner_id && (
-                <button
-                  onClick={handleStartChat}
-                  disabled={chatLoading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
-                >
-                  {chatLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Starting Chat...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Contact Owner
-                    </div>
-                  )}
-                </button>
+              {user && listing.userId && (
+                user.id !== listing.userId ? (
+                  <button
+                    onClick={handleStartChat}
+                    disabled={chatLoading}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    {chatLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Starting Chat...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <MessageCircle className="h-5 w-5 mr-2" />
+                        Contact Owner
+                      </div>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full bg-yellow-50 border border-yellow-200 py-3 px-4 rounded-md font-medium cursor-not-allowed"
+                  >
+                    This is your listing
+                  </button>
+                )
               )}
+
 
               {!user && (
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full text-yellow-800 font-medium bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
                 >
                   Login to Contact Owner
                 </button>

@@ -105,19 +105,22 @@ const ChatRoom = () => {
     {/* Left: Image + User Info */}
     <div className="flex items-center space-x-3">
       <img
-        src={getImageUrl(item.images || item.image_urls)}
-        alt={item.title || item.name}
-        className="w-14 h-14 rounded-lg object-cover border border-gray-200"
-      />
+  onClick={() => navigate(item.id ? `/product/${item.id}` : `/accommodation/${item.id}`)}
+  src={getImageUrl(item.images || item.image_urls)}
+  alt={item.title || item.name}
+  className="w-14 h-14 rounded-lg object-cover border border-gray-200 cursor-pointer hover:scale-105 transition-transform"
+/>
+
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">{item.title || item.name}</h2>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-          <User className="h-4 w-4" />
-          <span>{otherUser?.name}</span>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-400 text-xs">{otherUser?.email}</span>
-        </div>
-      </div>
+  <h2 className="text-lg font-semibold text-gray-800">{item.title || item.name}</h2>
+  <div className="flex items-center space-x-2 text-sm mt-1">
+    <User className="h-4 w-4 text-blue-500" />
+    <span className="text-gray-700 font-medium">{otherUser?.name}</span>
+    <span className="text-gray-400">•</span>
+    <span className="text-gray-500 italic text-xs">{otherUser?.email}</span>
+  </div>
+</div>
+
     </div>
 
     {/* Right: Price */}
