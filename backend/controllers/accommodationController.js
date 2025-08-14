@@ -1,6 +1,7 @@
 import Accommodation from '../models/Accommodation.js';
 import AccommodationBooking from '../models/AccommodationBooking.js';
 import cloudinary from '../config/cloudinary.js';
+import User from '../models/User.js'; // Added import for User
 
 // Helper to upload a file buffer to Cloudinary
 function uploadFileToCloudinary(file) {
@@ -59,6 +60,7 @@ export const getAccommodations = async (req, res) => {
   try {
     const listings = await Accommodation.findAll({
       where: { is_available: true },
+      include: [{ model: User, as: 'owner', attributes: ["id", "name", "phone"] }],
     });
     res.json(listings);
   } catch (error) {
@@ -70,7 +72,23 @@ export const getAccommodations = async (req, res) => {
 // Get single listing by ID
 export const getAccommodationById = async (req, res) => {
   try {
-    const listing = await Accommodation.findByPk(req.params.id);
+    const listing = await Accommodation.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: 'owner',
+          attributes: [
+            "id",
+            "name",
+            "email",
+            "phone",
+            "department",
+            "season",
+            "profile_image",
+          ],
+        },
+      ],
+    });
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
     res.json(listing);
   } catch (error) {
@@ -126,6 +144,7 @@ export const getMyAccommodations = async (req, res) => {
 
     const accommodations = await Accommodation.findAll({
       where: { userId: userId }, // Changed from owner_id to userId
+      include: [{ model: User, as: 'owner', attributes: ["id", "name", "phone"] }],
       logging: console.log, // Log SQL query for debugging
     });
 

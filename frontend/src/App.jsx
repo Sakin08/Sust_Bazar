@@ -19,10 +19,10 @@ import Profile from './pages/Profile';
 
 // Accommodation pages (import these)
 import AccommodationList from './pages/AccommodationList';
-import CreateAccommodation from './pages/CreateAccommodation';
+// import CreateAccommodation from './pages/CreateAccommodation';
 import AccommodationDetail from './pages/AccommodationDetail';
 import MyBookings from './pages/MyBookings';
-import OwnerDashboard from './pages/OwnerDashboard';
+// import OwnerDashboard from './pages/OwnerDashboard';
 import MyItems from './pages/MyItems';
 
 // rest of your code ...
@@ -40,11 +40,11 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/product/:id" element={<ProductDetail />} />
-            {/* <Route path="/accommodations" element={<AccommodationList />} /> */}
+            <Route path="/accommodations" element={<AccommodationList />} />
             {/* <Route path="/accommodations/create" element={<CreateAccommodation />} /> */}
-            {/* <Route path="/accommodations/:id" element={<AccommodationDetail />} /> */}
+          <Route path="/accommodation/:id" element={<AccommodationDetail />} />
             <Route path="/accommodations/bookings/my" element={<MyBookings />} />
-            <Route path="/accommodations/bookings/owner" element={<OwnerDashboard />} />
+            {/* <Route path="/accommodations/bookings/owner" element={<OwnerDashboard />} /> */}
 
             {/* Private Routes */}
             <Route path="/post" element={

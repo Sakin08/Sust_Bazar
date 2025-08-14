@@ -18,9 +18,9 @@ const NavLinks = ({ isActive }) => {
     { to: '/post', label: 'Post Item', icon: Plus },
     { to: '/chats', label: 'Chats', icon: MessageCircle },
     // { to: '/accommodations', label: 'Accommodations' },
-    { to: '/my-bookings', label: 'My Bookings' },
-    // { to: '/owner-dashboard', label: 'Accommodation Dashboard' },
-    { to: '/my-products', label: 'My Items' },
+    // { to: '/my-bookings', label: 'My Bookings' },
+    // // { to: '/owner-dashboard', label: 'Accommodation Dashboard' },
+    // { to: '/my-products', label: 'My Items' },
   ];
 
   return (
@@ -91,7 +91,7 @@ const UserMenu = ({ user, logout }) => {
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
           <div className="px-4 py-3 border-b border-gray-200">
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            {/* <p className="text-sm text-gray-500">{user.email}</p> */}
           </div>
 
           <Link
@@ -101,6 +101,26 @@ const UserMenu = ({ user, logout }) => {
           >
             <UserCircle className="h-4 w-4 mr-3" />
             Profile
+          </Link>
+
+          {/* My Bookings */}
+          <Link
+            to="/my-bookings"
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <ShoppingBag className="h-4 w-4 mr-3" />
+            My Bookings
+          </Link>
+
+          {/* My Items */}
+          <Link
+            to="/my-products"
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Plus className="h-4 w-4 mr-3" />
+            My Items
           </Link>
 
           <div className="border-t border-gray-200 my-1"></div>

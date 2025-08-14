@@ -203,22 +203,25 @@ const ProductDetail = () => {
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{product.description}</p>
               </div>
 
+
+
+
               {/* Seller Info */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Seller Information</h3>
                 <div className="flex items-center">
                   <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3 overflow-hidden">
                     <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3 overflow-hidden">
-  <img
-    src={product.seller?.profile_image || '/default-profile.png'}
-    alt={`${product.seller?.name}'s profile`}
-    className="h-8 w-8 object-cover rounded-full"
-    onError={(e) => {
-      e.target.onerror = null;
-      e.target.src = '/default-profile.png'; // fallback image if broken
-    }}
-  />
-</div>
+                      <img
+                        src={product.seller?.profile_image || '/default-profile.png'}
+                        alt={`${product.seller?.name}'s profile`}
+                        className="h-8 w-8 object-cover rounded-full"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/default-profile.png'; // fallback image if broken
+                        }}
+                      />
+                    </div>
 
                   </div>
                   <div>

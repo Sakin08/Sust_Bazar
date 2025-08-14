@@ -59,8 +59,4 @@ const Accommodation = sequelize.define('Accommodation', {
   updatedAt: 'updated_at',
 });
 
-// Associations
-Accommodation.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Accommodation, { foreignKey: 'userId' });
-
 export default Accommodation;

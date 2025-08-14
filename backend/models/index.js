@@ -25,8 +25,8 @@ User.hasMany(Message, { foreignKey: 'sender_id', as: 'sent_messages' });
 Message.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
 
 // New Accommodation Associations
-User.hasMany(Accommodation, { foreignKey: 'owner_id', as: 'accommodations' });
-Accommodation.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
+User.hasMany(Accommodation, { foreignKey: 'userId', as: 'accommodations' });
+Accommodation.belongsTo(User, { foreignKey: 'userId', as: 'owner' });
 
 Accommodation.hasMany(AccommodationBooking, { foreignKey: 'accommodation_id', as: 'bookings' });
 AccommodationBooking.belongsTo(Accommodation, { foreignKey: 'accommodation_id', as: 'accommodation' });
