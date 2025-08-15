@@ -25,19 +25,13 @@ const Chats = () => {
     }
   };
 
-  const getOtherUser = (chat) => {
-    return chat.user1_id === user.id ? chat.user2 : chat.user1;
-  };
+  const getOtherUser = (chat) => chat.user1_id === user.id ? chat.user2 : chat.user1;
 
- const getImageUrl = (chat) => {
-  if (chat.product?.image_urls?.length > 0) {
-    return chat.product.image_urls[0];
-  }
-  if (chat.accommodation?.image_urls?.length > 0) {
-    return chat.accommodation.image_urls[0];
-  }
-  return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
-};
+  const getImageUrl = (chat) => {
+    if (chat.product?.image_urls?.length > 0) return chat.product.image_urls[0];
+    if (chat.accommodation?.image_urls?.length > 0) return chat.accommodation.image_urls[0];
+    return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
+  };
 
   const formatDate = (date) => {
     const messageDate = new Date(date);
@@ -45,15 +39,10 @@ const Chats = () => {
     const diffTime = Math.abs(now - messageDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
-      return 'Today';
-    } else if (diffDays === 2) {
-      return 'Yesterday';
-    } else if (diffDays <= 7) {
-      return `${diffDays - 1} days ago`;
-    } else {
-      return messageDate.toLocaleDateString('en-BD');
-    }
+    if (diffDays === 1) return 'Today';
+    if (diffDays === 2) return 'Yesterday';
+    if (diffDays <= 7) return `${diffDays - 1} days ago`;
+    return messageDate.toLocaleDateString('en-BD');
   };
 
   if (loading) {
@@ -72,11 +61,9 @@ const Chats = () => {
           <p className="text-gray-600">Conversations with buyers and sellers</p>
         </div>
 
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-red-800">{error}</p>
+        </div>}
 
         {chats.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
@@ -87,10 +74,7 @@ const Chats = () => {
             <p className="text-gray-500 mb-4">
               Start a conversation by contacting a seller on a product or accommodation page.
             </p>
-            <Link
-              to="/"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
+            <Link to="/" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
               Browse Listings
             </Link>
           </div>
@@ -99,58 +83,45 @@ const Chats = () => {
             <div className="divide-y divide-gray-200">
               {chats.map(chat => {
                 const otherUser = getOtherUser(chat);
-                const lastMessage = chat.messages?.[0];
                 const title = chat.product?.title || chat.accommodation?.title;
                 const price = chat.product?.price || chat.accommodation?.price;
+                const lastMessage = chat.latestMessage;
 
                 return (
-                  <Link
-                    key={chat.id}
-                    to={`/chat/${chat.id}`}
-                    className="block p-6 hover:bg-gray-50 transition-colors"
-                  >
+                  <Link key={chat.id} to={`/chat/${chat.id}`} className="block p-6 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start space-x-4">
-                      {/* Image */}
                       <div className="flex-shrink-0">
-                        <img
-                          src={getImageUrl(chat)}
-                          alt={title || 'Item'}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
+                        <img src={getImageUrl(chat)} alt={title || 'Item'} className="w-16 h-16 rounded-lg object-cover" />
                       </div>
-                      
-                      {/* Chat Info */}
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <User className="h-4 w-4 text-gray-400" />
-                              <p className="text-sm font-medium text-gray-900">
-                                {otherUser?.name}
-                              </p>
+                              <p className="text-sm font-medium text-gray-900">{otherUser?.name}</p>
+
+                              {/* Unread badge */}
+                              {chat.unreadCount > 0 && (
+                                <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                  {chat.unreadCount}
+                                </span>
+                              )}
                             </div>
-                            <p className="text-lg font-semibold text-gray-900 mb-1">
-                              {title}
-                            </p>
-                            {price && (
-                              <p className="text-sm font-medium text-blue-600 mb-2">
-                                ৳{price}
-                              </p>
-                            )}
-                            
+
+                            <p className="text-lg font-semibold text-gray-900 mb-1">{title}</p>
+                            {price && <p className="text-sm font-medium text-blue-600 mb-2">৳{price}</p>}
+
                             {lastMessage && (
-                              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                                <span>
+                              <div className="flex items-center space-x-2 text-sm">
+                                <span className={`${lastMessage.is_read || lastMessage.sender?.id === user.id ? 'text-gray-500' : 'font-bold text-gray-900'}`}>
                                   {lastMessage.sender?.id === user.id ? 'You: ' : ''}
-                                  {lastMessage.text.length > 50 
-                                    ? `${lastMessage.text.substring(0, 50)}...`
-                                    : lastMessage.text
-                                  }
+                                  {lastMessage.text.length > 50 ? `${lastMessage.text.substring(0, 50)}...` : lastMessage.text}
                                 </span>
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="flex flex-col items-end text-xs text-gray-400">
                             {lastMessage && (
                               <div className="flex items-center space-x-1">

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import {
   ShoppingBag,
   User,
@@ -12,29 +13,22 @@ import {
   UserCircle,
 } from 'lucide-react';
 
-const NavLinks = ({ isActive }) => {
+const NavLinks = ({ isActive, unreadCount }) => {
   const links = [
     { to: '/', label: 'Browse' },
     { to: '/post', label: 'Post Item', icon: Plus },
-    { to: '/chats', label: 'Chats', icon: MessageCircle },
-    // { to: '/accommodations', label: 'Accommodations' },
-    // { to: '/my-bookings', label: 'My Bookings' },
-    // // { to: '/owner-dashboard', label: 'Accommodation Dashboard' },
-    // { to: '/my-products', label: 'My Items' },
-    // in NavLinks
+    { to: '/chats', label: 'Chats', icon: MessageCircle, badge: unreadCount },
     { to: '/community', label: 'Community' },
-     { to: '/events', label: 'Events' },  
-    
-
+    { to: '/events', label: 'Events' },
   ];
 
   return (
     <>
-      {links.map(({ to, label, icon: Icon }) => (
+      {links.map(({ to, label, icon: Icon, badge }) => (
         <Link
           key={to}
           to={to}
-          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             isActive(to)
               ? 'text-blue-600 bg-blue-50'
               : 'text-gray-700 hover:text-blue-600'
@@ -42,6 +36,13 @@ const NavLinks = ({ isActive }) => {
         >
           {Icon && <Icon className="inline h-4 w-4 mr-1" />}
           {label}
+
+          {/* Badge */}
+          {badge > 0 && (
+            <span className="absolute top-0 right-0 -mt-1 -mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+              {badge}
+            </span>
+          )}
         </Link>
       ))}
     </>
@@ -96,7 +97,6 @@ const UserMenu = ({ user, logout }) => {
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
           <div className="px-4 py-3 border-b border-gray-200">
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            {/* <p className="text-sm text-gray-500">{user.email}</p> */}
           </div>
 
           <Link
@@ -108,7 +108,6 @@ const UserMenu = ({ user, logout }) => {
             Profile
           </Link>
 
-          {/* My Bookings */}
           <Link
             to="/my-bookings"
             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -118,7 +117,6 @@ const UserMenu = ({ user, logout }) => {
             My Bookings
           </Link>
 
-          {/* My Items */}
           <Link
             to="/my-products"
             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -164,8 +162,41 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isActive = (path) => location.pathname === path;
+
+  // Fetch unread messages
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnreadMessages = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:3001/api/chats', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        let count = 0;
+        response.data.forEach(chat => {
+          chat.messages?.forEach(msg => {
+            if (!msg.is_read && msg.sender_id !== user.id) count++;
+          });
+        });
+
+        setUnreadCount(count);
+      } catch (err) {
+        console.error('Failed to fetch unread messages:', err);
+      }
+    };
+
+    fetchUnreadMessages();
+
+    const interval = setInterval(fetchUnreadMessages, 3000); // refresh every 15s
+    return () => clearInterval(interval);
+  }, [user]);
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -177,9 +208,9 @@ const Navbar = () => {
             <span className="text-xl font-bold text-gray-900">SUSTBazaar</span>
           </Link>
 
-          {/* Navigation Links (only show if user logged in) */}
+          {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            {user ? <NavLinks isActive={isActive} /> : null}
+            {user ? <NavLinks isActive={isActive} unreadCount={unreadCount} /> : null}
           </div>
 
           {/* User Menu or Auth Links */}

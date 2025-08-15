@@ -3,6 +3,8 @@ import { Op } from 'sequelize';
 
 // Get all chats for a user
 // Get all chats for a user
+
+// Get all chats for a user
 export const getUserChats = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -27,7 +29,6 @@ export const getUserChats = async (req, res) => {
         {
           model: Message,
           as: 'messages',
-          limit: 1,
           order: [['created_at', 'DESC']],
           include: [{ model: User, as: 'sender', attributes: ['id', 'name'] }],
         },
@@ -35,30 +36,38 @@ export const getUserChats = async (req, res) => {
       order: [['updated_at', 'DESC']],
     });
 
-    // Format chat results so accommodation.images → accommodation.image_urls (array)
+    // Format chat results and add unread count
     const formattedChats = chats.map(chat => {
       const chatData = chat.toJSON();
 
+      // Format accommodation images
       if (chatData.accommodation && chatData.accommodation.images) {
-        let imageUrls;
         try {
-          imageUrls = JSON.parse(chatData.accommodation.images); // Convert JSON string to array
+          chatData.accommodation.image_urls = JSON.parse(chatData.accommodation.images);
         } catch (err) {
-          console.error("Error parsing accommodation images:", err);
-          imageUrls = [];
+          chatData.accommodation.image_urls = [];
         }
-        chatData.accommodation.image_urls = Array.isArray(imageUrls) ? imageUrls : [];
       }
 
-      return chatData;
+      // Count unread messages
+      const unreadCount = chatData.messages.reduce((acc, msg) => {
+        return acc + (!msg.is_read && msg.sender_id !== userId ? 1 : 0);
+      }, 0);
+
+      // Get latest message
+      const latestMessage = chatData.messages[0] || null;
+
+      return { ...chatData, unreadCount, latestMessage };
     });
 
     res.json(formattedChats);
+
   } catch (error) {
     console.error('Get user chats error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // Get or create a chat (product or accommodation)
 export const getOrCreateChat = async (req, res) => {
