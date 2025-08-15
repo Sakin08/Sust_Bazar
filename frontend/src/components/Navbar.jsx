@@ -22,7 +22,8 @@ const NavLinks = ({ isActive }) => {
     // // { to: '/owner-dashboard', label: 'Accommodation Dashboard' },
     // { to: '/my-products', label: 'My Items' },
     // in NavLinks
-    { to: '/community', label: 'Community' }
+    { to: '/community', label: 'Community' },
+     { to: '/events', label: 'Events' },  
     
 
   ];

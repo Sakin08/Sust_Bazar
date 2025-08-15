@@ -1,0 +1,107 @@
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import Countdown from '../components/Countdown';
+import { useAuth } from '../context/AuthContext';
+
+const EventsPage = () => {
+  const { user, token } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    description: '',
+    event_date: '',
+    media: null
+  });
+
+  // Fetch events
+  useEffect(() => {
+    axios.get('http://localhost:3001/api/events', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setEvents(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  // Post new event
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
+    if (!user) return alert('Login required');
+
+    const formData = new FormData();
+    formData.append('title', newEvent.title);
+    formData.append('description', newEvent.description);
+    formData.append('event_date', newEvent.event_date);
+    formData.append('created_by', user.id);
+    if (newEvent.media) formData.append('media', newEvent.media);
+
+    const res = await axios.post('http://localhost:3001/api/events', formData, {
+      headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+    });
+    setEvents([res.data, ...events]);
+    setNewEvent({ title: '', description: '', event_date: '', media: null });
+  };
+
+  // Sort nearest events
+  const nearestEvents = [...events].sort((a, b) => new Date(a.event_date) - new Date(b.event_date)).slice(0, 5);
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">Events</h1>
+
+      {/* Post Event Section */}
+      {user && (
+        <form onSubmit={handleCreateEvent} className="p-4 border rounded bg-white space-y-2">
+          <input type="text" placeholder="Event Title" value={newEvent.title} 
+                 onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} required />
+          <textarea placeholder="Description" value={newEvent.description} 
+                    onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}></textarea>
+          <input type="datetime-local" value={newEvent.event_date} 
+                 onChange={e => setNewEvent({ ...newEvent, event_date: e.target.value })} required />
+          <input type="file" accept="image/*" onChange={e => setNewEvent({ ...newEvent, media: e.target.files[0] })} />
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Post Event</button>
+        </form>
+      )}
+
+      {/* Nearest Events Countdown */}
+      <div className="p-4 border rounded bg-yellow-50">
+        <h2 className="font-semibold mb-2">Upcoming Events</h2>
+        {nearestEvents.map(event => (
+          <div key={event.id} className="flex justify-between mb-1">
+            <span>{event.title}</span>
+            <Countdown eventDate={event.event_date} />
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline of Events */}
+      {/* Timeline of Events */}
+<div className="space-y-4">
+  <h2 className="font-semibold mb-2">Event Timeline</h2>
+  {events.map(event => (
+    <div key={event.id} className="p-4 border rounded bg-white flex flex-col gap-2">
+      <h3 className="font-semibold">{event.title}</h3>
+      <p>{event.description}</p>
+
+      {/* Creator info */}
+      {event.creator && (
+        <div className="text-sm text-gray-600">
+          <span>Posted by: {event.creator.name} ({event.creator.email})</span>
+        </div>
+      )}
+
+      {event.media_url && (
+        <img
+          src={`http://localhost:3001/${event.media_url}`}
+          alt={event.title}
+          className="max-h-60 object-cover"
+        />
+      )}
+      <div>Event Date: {new Date(event.event_date).toLocaleString()}</div>
+      <div>Countdown: <Countdown eventDate={event.event_date} /></div>
+    </div>
+  ))}
+</div>
+
+    </div>
+  );
+};
+
+export default EventsPage;

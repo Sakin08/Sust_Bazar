@@ -6,29 +6,23 @@ import PrivateRoute from './components/PrivateRoute';
 import PostItemPage from './pages/PostItemPage';
 import Community from './pages/Community';
 import CommunityPostDetail from './pages/CommunityPostDetail';
+import EventsPage from './pages/EventsPage'; // <-- import EventsPage
 
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import PostProduct from './pages/PostProduct';
 import ProductDetail from './pages/ProductDetail';
-import MyProducts from './pages/MyItems';
+import MyItems from './pages/MyItems';
 import Chats from './pages/Chats';
 import ChatRoom from './pages/ChatRoom';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 
-// Accommodation pages (import these)
+// Accommodation pages
 import AccommodationList from './pages/AccommodationList';
-// import CreateAccommodation from './pages/CreateAccommodation';
 import AccommodationDetail from './pages/AccommodationDetail';
 import MyBookings from './pages/MyBookings';
-// import OwnerDashboard from './pages/OwnerDashboard';
-import MyItems from './pages/MyItems';
-
-// rest of your code ...
-
 
 function App() {
   return (
@@ -43,10 +37,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/accommodations" element={<AccommodationList />} />
-            {/* <Route path="/accommodations/create" element={<CreateAccommodation />} /> */}
             <Route path="/accommodation/:id" element={<AccommodationDetail />} />
             <Route path="/accommodations/bookings/my" element={<MyBookings />} />
-            {/* <Route path="/accommodations/bookings/owner" element={<OwnerDashboard />} /> */}
 
             {/* Private Routes */}
             <Route path="/post" element={
@@ -54,26 +46,21 @@ function App() {
                 <PostItemPage />
               </PrivateRoute>
             } />
-
-
-            {/* Community Section */}
             <Route path="/community" element={
               <PrivateRoute>
                 <Community />
               </PrivateRoute>
             } />
-            <Route path="/community/:id" element={<CommunityPostDetail />} />
-
-
-
-
-
+            <Route path="/community/:id" element={
+              <PrivateRoute>
+                <CommunityPostDetail />
+              </PrivateRoute>
+            } />
             <Route path="/profile" element={
               <PrivateRoute>
                 <Profile />
               </PrivateRoute>
             } />
-
             <Route path="/my-products" element={
               <PrivateRoute>
                 <MyItems />
@@ -87,6 +74,13 @@ function App() {
             <Route path="/chat/:chatId" element={
               <PrivateRoute>
                 <ChatRoom />
+              </PrivateRoute>
+            } />
+
+            {/* Events */}
+            <Route path="/events" element={
+              <PrivateRoute>
+                <EventsPage />
               </PrivateRoute>
             } />
 

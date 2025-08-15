@@ -9,6 +9,7 @@ import adminRoutes from "./routes/admin.js";
 import userRoutes from "./routes/users.js";
 import accommodationRoutes from "./routes/accommodation.js";
 import communityRoutes from "./routes/communityRoutes.js";
+import eventsRouter from './routes/events.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +34,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/accommodations", accommodationRoutes);
 app.use("/api/community", communityRoutes);
+app.use('/api/events', eventsRouter);
 
 // Add this before your error handling middleware
 app.use((req, res, next) => {
