@@ -41,6 +41,7 @@ const MyItems = () => {
     fetchMyItems();
   }, []);
 
+  // Toggle product sold status
   const handleToggleSold = async (productId, currentStatus) => {
     try {
       await axios.put(`http://localhost:3001/api/products/${productId}`, {
@@ -55,6 +56,7 @@ const MyItems = () => {
     }
   };
 
+  // Delete product
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
@@ -66,10 +68,11 @@ const MyItems = () => {
     }
   };
 
+  // Delete accommodation
   const handleDeleteAccommodation = async (accommodationId) => {
     if (!window.confirm('Are you sure you want to delete this accommodation?')) return;
     try {
-      await axios.delete(`http://localhost:3001/api/accommodations/${accommodationId}`, { withCredentials: true });
+      await axios.delete(`http://localhost:3001/api/accommodations/my-accommodations/${accommodationId}`, { withCredentials: true });
       setAccommodations(accommodations.filter(a => a.id !== accommodationId));
     } catch (err) {
       console.error('Delete accommodation error:', err);

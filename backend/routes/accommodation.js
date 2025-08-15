@@ -7,6 +7,7 @@ import {
   getMyAccommodations,
   bookAccommodation,
   updateBookingStatus,
+  deleteAccommodation,
 } from '../controllers/accommodationController.js';
 import { uploadMemory } from '../middleware/multer.js';
 
@@ -20,5 +21,6 @@ router.get('/:id', getAccommodationById);
 
 router.post('/:id/book', authenticate, bookAccommodation);
 router.patch('/bookings/:bookingId', authenticate, updateBookingStatus);
+router.delete('/my-accommodations/:id', authenticate, deleteAccommodation);
 
 export default router;

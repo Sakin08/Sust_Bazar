@@ -154,3 +154,37 @@ export const getMyAccommodations = async (req, res) => {
     res.status(500).json({ message: 'Failed to get accommodations due to a server error.', details: error.message });
   }
 };
+
+
+
+// Delete accommodation
+export const deleteAccommodation = async (req, res) => {
+  try {
+    const accommodationId = req.params.id;
+    const userId = req.user.id;
+
+    // Find the accommodation
+    const accommodation = await Accommodation.findByPk(accommodationId);
+    if (!accommodation) return res.status(404).json({ message: 'Accommodation not found' });
+
+    // Only owner can delete
+    if (accommodation.userId !== userId) {
+      return res.status(403).json({ message: 'You are not allowed to delete this accommodation' });
+    }
+
+    // Optional: Delete associated images from Cloudinary
+    if (accommodation.images) {
+      const imageUrls = JSON.parse(accommodation.images);
+      for (const url of imageUrls) {
+        const publicId = url.split('/').pop().split('.')[0]; // crude extraction
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
+    await accommodation.destroy();
+    res.json({ message: 'Accommodation deleted successfully' });
+  } catch (error) {
+    console.error('Delete Accommodation error:', error);
+    res.status(500).json({ message: 'Failed to delete accommodation', details: error.message });
+  }
+};
