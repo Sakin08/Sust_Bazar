@@ -1,4 +1,62 @@
-import { User, Product, Chat, Message } from '../models/index.js';
+import { User, Product, Chat, Message, Accommodation } from '../models/index.js';
+
+// Fetch all accommodations
+
+
+// Fetch all accommodations
+export const getAllAccommodations = async (req, res) => {
+  try {
+    const accommodations = await Accommodation.findAll({
+      include: [
+        {
+          model: User,
+          as: 'owner', // association defined in index.js
+          attributes: ['id', 'name', 'email', 'phone', 'season', 'profile_image']
+        }
+      ],
+      attributes: [
+        'id',
+        'title',
+        'description',
+        'price',        // changed from price_per_night
+        'location',
+        'images',       // changed from image_urls
+        'is_available', // changed from is_booked
+        'created_at'
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Parse images JSON and send formatted data
+    const formattedAccommodations = accommodations.map(acc => ({
+      ...acc.toJSON(),
+      images: acc.images ? JSON.parse(acc.images) : [],
+    }));
+
+    res.json(formattedAccommodations);
+  } catch (error) {
+    console.error('Get all accommodations error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
+
+// Delete an accommodation
+export const deleteAccommodation = async (req, res) => {
+  try {
+    const { accommodationId } = req.params;
+    const accommodation = await Accommodation.findByPk(accommodationId);
+    if (!accommodation) return res.status(404).json({ message: 'Accommodation not found' });
+
+    await accommodation.destroy();
+    res.json({ message: 'Accommodation deleted successfully' });
+  } catch (error) {
+    console.error('Delete accommodation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -84,3 +142,6 @@ export const getStats = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+
