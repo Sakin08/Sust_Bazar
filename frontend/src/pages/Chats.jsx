@@ -17,7 +17,15 @@ const Chats = () => {
   const fetchChats = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/chats');
-      setChats(response.data);
+
+      // Sort chats by latest message timestamp (descending)
+      const sortedChats = response.data.sort((a, b) => {
+        const dateA = new Date(a.latestMessage?.created_at || 0).getTime();
+        const dateB = new Date(b.latestMessage?.created_at || 0).getTime();
+        return dateB - dateA; // newest first
+      });
+
+      setChats(sortedChats);
     } catch (error) {
       setError('Failed to fetch chats');
     } finally {
@@ -25,7 +33,7 @@ const Chats = () => {
     }
   };
 
-  const getOtherUser = (chat) => chat.user1_id === user.id ? chat.user2 : chat.user1;
+  const getOtherUser = (chat) => (chat.user1_id === user.id ? chat.user2 : chat.user1);
 
   const getImageUrl = (chat) => {
     if (chat.product?.image_urls?.length > 0) return chat.product.image_urls[0];
@@ -36,12 +44,12 @@ const Chats = () => {
   const formatDate = (date) => {
     const messageDate = new Date(date);
     const now = new Date();
-    const diffTime = Math.abs(now - messageDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffTime = now - messageDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays - 1} days ago`;
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays <= 7) return `${diffDays} days ago`;
     return messageDate.toLocaleDateString('en-BD');
   };
 
@@ -61,9 +69,11 @@ const Chats = () => {
           <p className="text-gray-600">Conversations with buyers and sellers</p>
         </div>
 
-        {error && <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-800">{error}</p>
-        </div>}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
 
         {chats.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
@@ -74,24 +84,35 @@ const Chats = () => {
             <p className="text-gray-500 mb-4">
               Start a conversation by contacting a seller on a product or accommodation page.
             </p>
-            <Link to="/" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <Link
+              to="/"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
               Browse Listings
             </Link>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="divide-y divide-gray-200">
-              {chats.map(chat => {
+              {chats.map((chat) => {
                 const otherUser = getOtherUser(chat);
                 const title = chat.product?.title || chat.accommodation?.title;
                 const price = chat.product?.price || chat.accommodation?.price;
                 const lastMessage = chat.latestMessage;
 
                 return (
-                  <Link key={chat.id} to={`/chat/${chat.id}`} className="block p-6 hover:bg-gray-50 transition-colors">
+                  <Link
+                    key={chat.id}
+                    to={`/chat/${chat.id}`}
+                    className="block p-6 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start space-x-4">
                       <div className="flex-shrink-0">
-                        <img src={getImageUrl(chat)} alt={title || 'Item'} className="w-16 h-16 rounded-lg object-cover" />
+                        <img
+                          src={getImageUrl(chat)}
+                          alt={title || 'Item'}
+                          className="w-16 h-16 rounded-lg object-cover"
+                        />
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -110,13 +131,23 @@ const Chats = () => {
                             </div>
 
                             <p className="text-lg font-semibold text-gray-900 mb-1">{title}</p>
-                            {price && <p className="text-sm font-medium text-blue-600 mb-2">৳{price}</p>}
+                            {price && (
+                              <p className="text-sm font-medium text-blue-600 mb-2">৳{price}</p>
+                            )}
 
                             {lastMessage && (
                               <div className="flex items-center space-x-2 text-sm">
-                                <span className={`${lastMessage.is_read || lastMessage.sender?.id === user.id ? 'text-gray-500' : 'font-bold text-gray-900'}`}>
+                                <span
+                                  className={`${
+                                    lastMessage.is_read || lastMessage.sender?.id === user.id
+                                      ? 'text-gray-500'
+                                      : 'font-bold text-gray-900'
+                                  }`}
+                                >
                                   {lastMessage.sender?.id === user.id ? 'You: ' : ''}
-                                  {lastMessage.text.length > 50 ? `${lastMessage.text.substring(0, 50)}...` : lastMessage.text}
+                                  {lastMessage.text.length > 50
+                                    ? `${lastMessage.text.substring(0, 50)}...`
+                                    : lastMessage.text}
                                 </span>
                               </div>
                             )}
