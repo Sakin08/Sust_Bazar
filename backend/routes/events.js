@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
-import { getEvents, createEvent } from '../controllers/eventController.js';
+import { getEvents, createEvent, deleteEvent } from '../controllers/eventController.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -13,5 +14,6 @@ const upload = multer({ storage });
 
 router.get('/', getEvents);
 router.post('/', upload.single('media'), createEvent);
+router.delete('/:id', authenticate, deleteEvent); 
 
 export default router;
