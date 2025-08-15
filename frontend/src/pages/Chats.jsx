@@ -29,14 +29,15 @@ const Chats = () => {
     return chat.user1_id === user.id ? chat.user2 : chat.user1;
   };
 
-  const getImageUrl = (imageUrls) => {
-  if (imageUrls && imageUrls.length > 0) {
-    // Assuming imageUrls is already an array of full URLs from backend
-    return imageUrls[0]; // Use directly, no prefixing
+ const getImageUrl = (chat) => {
+  if (chat.product?.image_urls?.length > 0) {
+    return chat.product.image_urls[0];
+  }
+  if (chat.accommodation?.image_urls?.length > 0) {
+    return chat.accommodation.image_urls[0];
   }
   return 'https://images.pexels.com/photos/3740393/pexels-photo-3740393.jpeg?auto=compress&cs=tinysrgb&w=400';
 };
-
 
   const formatDate = (date) => {
     const messageDate = new Date(date);
@@ -84,13 +85,13 @@ const Chats = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No conversations yet</h3>
             <p className="text-gray-500 mb-4">
-              Start a conversation by contacting a seller on a product page.
+              Start a conversation by contacting a seller on a product or accommodation page.
             </p>
             <Link
               to="/"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Browse Products
+              Browse Listings
             </Link>
           </div>
         ) : (
@@ -99,7 +100,9 @@ const Chats = () => {
               {chats.map(chat => {
                 const otherUser = getOtherUser(chat);
                 const lastMessage = chat.messages?.[0];
-                
+                const title = chat.product?.title || chat.accommodation?.title;
+                const price = chat.product?.price || chat.accommodation?.price;
+
                 return (
                   <Link
                     key={chat.id}
@@ -107,11 +110,11 @@ const Chats = () => {
                     className="block p-6 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start space-x-4">
-                      {/* Product Image */}
+                      {/* Image */}
                       <div className="flex-shrink-0">
                         <img
-                          src={getImageUrl(chat.product?.image_urls)}
-                          alt={chat.product?.title}
+                          src={getImageUrl(chat)}
+                          alt={title || 'Item'}
                           className="w-16 h-16 rounded-lg object-cover"
                         />
                       </div>
@@ -127,11 +130,13 @@ const Chats = () => {
                               </p>
                             </div>
                             <p className="text-lg font-semibold text-gray-900 mb-1">
-                              {chat.product?.title}
+                              {title}
                             </p>
-                            <p className="text-sm font-medium text-blue-600 mb-2">
-                              ৳{chat.product?.price}
-                            </p>
+                            {price && (
+                              <p className="text-sm font-medium text-blue-600 mb-2">
+                                ৳{price}
+                              </p>
+                            )}
                             
                             {lastMessage && (
                               <div className="flex items-center space-x-2 text-sm text-gray-500">

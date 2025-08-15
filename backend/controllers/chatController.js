@@ -2,16 +2,28 @@ import { Chat, Message, User, Product, Accommodation } from '../models/index.js'
 import { Op } from 'sequelize';
 
 // Get all chats for a user
+// Get all chats for a user
 export const getUserChats = async (req, res) => {
   try {
     const userId = req.user.id;
+
     const chats = await Chat.findAll({
       where: { [Op.or]: [{ user1_id: userId }, { user2_id: userId }] },
       include: [
         { model: User, as: 'user1', attributes: ['id', 'name', 'email'] },
         { model: User, as: 'user2', attributes: ['id', 'name', 'email'] },
-        { model: Product, as: 'product', attributes: ['id', 'title', 'price', 'image_urls'], required: false },
-        { model: Accommodation, as: 'accommodation', attributes: ['id', 'title', 'price', 'images'], required: false },
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'title', 'price', 'image_urls'],
+          required: false
+        },
+        {
+          model: Accommodation,
+          as: 'accommodation',
+          attributes: ['id', 'title', 'price', 'images'],
+          required: false
+        },
         {
           model: Message,
           as: 'messages',
@@ -22,7 +34,26 @@ export const getUserChats = async (req, res) => {
       ],
       order: [['updated_at', 'DESC']],
     });
-    res.json(chats);
+
+    // Format chat results so accommodation.images → accommodation.image_urls (array)
+    const formattedChats = chats.map(chat => {
+      const chatData = chat.toJSON();
+
+      if (chatData.accommodation && chatData.accommodation.images) {
+        let imageUrls;
+        try {
+          imageUrls = JSON.parse(chatData.accommodation.images); // Convert JSON string to array
+        } catch (err) {
+          console.error("Error parsing accommodation images:", err);
+          imageUrls = [];
+        }
+        chatData.accommodation.image_urls = Array.isArray(imageUrls) ? imageUrls : [];
+      }
+
+      return chatData;
+    });
+
+    res.json(formattedChats);
   } catch (error) {
     console.error('Get user chats error:', error);
     res.status(500).json({ message: 'Server error' });
