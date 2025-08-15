@@ -8,13 +8,14 @@ const CommunityPostCard = ({ post, currentUser, onDelete }) => {
     const navigate = useNavigate();
     const isOwner = currentUser?.id === post.userId;
 
+    // Update the handleContact function
     const handleContact = () => {
         if (!user) {
             navigate('/login');
             return;
         }
-        // Navigate to chat with the post owner
-        navigate(`/chats?with=${post.userId}&about=${post.title}`);
+        // Navigate to the community post details page
+        navigate(`/community/${post.id}`);
     };
 
     return (
