@@ -10,7 +10,8 @@ import {
     Mail,
     Phone,
     GraduationCap,
-    Calendar
+    Calendar,
+    Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -74,103 +75,65 @@ const CommunityPostDetail = () => {
         }
     };
 
-    const handleContact = async () => {
+    const handleStartChat = async () => {
         if (!user) {
             navigate('/login');
             return;
         }
 
         try {
-            // Create or get existing chat
-            const response = await axios.post('http://localhost:3001/api/chats', {
+            const response = await axios.post('http://localhost:3001/api/chats/create', {
                 communityPostId: post.id,
-                userId: post.userId
+                userId: post.author.id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-
-            setChatId(response.data.id);
-            setShowChat(true);
-
-            // Fetch existing messages
-            const messagesResponse = await axios.get(`http://localhost:3001/api/chats/${response.data.id}/messages`);
-            setChatMessages(messagesResponse.data);
+            navigate(`/chat/${response.data.id}`);
         } catch (error) {
-            console.error('Error initiating chat:', error);
+            console.error('Error starting chat:', error);
         }
     };
 
-    const renderChat = () => (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg w-full max-w-lg h-[600px] flex flex-col">
-                {/* Chat Header */}
-                <div className="p-4 border-b flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                            <img
-                                src={post.author?.profile_image || '/default-avatar.png'}
-                                alt={post.author?.name}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold">{post.author?.name}</h3>
-                            <p className="text-sm text-gray-600">{post.title}</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setShowChat(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                {/* Chat Messages */}
-                <div
-                    ref={chatContainerRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-4"
-                >
-                    {chatMessages.map((msg, idx) => (
-                        <div
-                            key={idx}
-                            className={`flex ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
-                        >
-                            <div
-                                className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender_id === user.id
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-900'
-                                    }`}
-                            >
-                                <p>{msg.text}</p>
-                                <p className={`text-xs mt-1 ${msg.sender_id === user.id ? 'text-blue-200' : 'text-gray-500'
-                                    }`}>
-                                    {new Date(msg.created_at).toLocaleTimeString()}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Message Input */}
-                <div className="p-4 border-t">
-                    <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex gap-2">
-                        <input
-                            type="text"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Type your message..."
-                            className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+    const renderChatSection = () => (
+        <div className="mt-6 border-t pt-6">
+            <h2 className="text-lg font-semibold mb-4">Contact Options</h2>
+            <div className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                        <img
+                            src={post.author?.profile_image || '/default-avatar.png'}
+                            alt={post.author?.name}
+                            className="w-full h-full object-cover"
                         />
-                        <button
-                            type="submit"
-                            disabled={!message.trim()}
-                            className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send className="w-5 h-5" />
-                        </button>
-                    </form>
+                    </div>
+                    <div>
+                        <h3 className="font-medium text-gray-900">{post.author?.name}</h3>
+                        <p className="text-sm text-gray-500">{post.author?.email}</p>
+                    </div>
                 </div>
+
+                {user ? (
+                    user.id !== post.userId ? (
+                        <button
+                            onClick={handleStartChat}
+                            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <MessageCircle className="w-5 h-5" />
+                            Start Chat with {post.type === 'lost' ? 'Owner' : 'Finder'}
+                        </button>
+                    ) : (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p className="text-yellow-800 font-medium">This is your post</p>
+                        </div>
+                    )
+                ) : (
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    >
+                        Login to Start Chat
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -179,121 +142,140 @@ const CommunityPostDetail = () => {
     if (!post) return <div className="p-4">Post not found</div>;
 
     return (
-        <div className="max-w-4xl mx-auto p-4">
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center text-gray-600 mb-4 hover:text-gray-900"
-            >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back
-            </button>
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+                >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    Back
+                </button>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-
-                {/* Post Images */}
-                {post.images && post.images.length > 0 && (
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        {post.images.map((img, idx) => (
-                            <img
-                                key={idx}
-                                src={`http://localhost:3001/uploads/${img}`}
-                                alt={`Post image ${idx + 1}`}
-                                className="rounded-lg w-full object-cover h-64"
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* Post Details */}
-                <div className="space-y-4">
-                    <p className="text-gray-700 whitespace-pre-wrap">{post.description}</p>
-
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            {post.location || 'No location specified'}
+                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Image Gallery */}
+                        <div className="p-6">
+                            {post.images && post.images.length > 0 && (
+                                <>
+                                    <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-4">
+                                        <img
+                                            src={`http://localhost:3001/uploads/${post.images[0]}`}
+                                            alt={post.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    {post.images.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {post.images.slice(1).map((img, idx) => (
+                                                <div key={idx} className="aspect-square rounded-md overflow-hidden bg-gray-100">
+                                                    <img
+                                                        src={`http://localhost:3001/uploads/${img}`}
+                                                        alt={`${post.title} ${idx + 2}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            {new Date(post.createdAt).toLocaleDateString()}
-                        </div>
-                    </div>
 
-                    {/* Tags */}
-                    {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {post.tags.map((tag, idx) => (
-                                <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Author Information - Replace the existing author section */}
-                    <div className="border-t pt-4 mt-6">
-                        <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
-                        <div className="bg-gray-50 rounded-lg p-6">
-                            <div className="flex items-start space-x-4">
-                                {/* Profile Image */}
-                                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                    <img
-                                        src={post.author?.profile_image || '/default-avatar.png'}
-                                        alt={post.author?.name}
-                                        className="w-full h-full object-cover"
-                                    />
+                        {/* Post Info */}
+                        <div className="p-6">
+                            <div className="mb-6">
+                                <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
+                                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                    <div className="flex items-center">
+                                        <Tag className="h-4 w-4 mr-1" />
+                                        <span>{post.category}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <Clock className="h-4 w-4 mr-1" />
+                                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    {post.location && (
+                                        <div className="flex items-center">
+                                            <MapPin className="h-4 w-4 mr-1" />
+                                            <span>{post.location}</span>
+                                        </div>
+                                    )}
                                 </div>
+                            </div>
 
-                                {/* Contact Details */}
-                                <div className="flex-1 space-y-2">
-                                    <h3 className="text-xl font-medium text-gray-900">
-                                        {post.author?.name}
-                                    </h3>
-                                    <div className="space-y-1 text-gray-600">
-                                        <p className="flex items-center gap-2">
-                                            <Phone className="w-4 h-4" />
-                                            {post.author?.phone || 'No phone number provided'}
-                                        </p>
-                                        <p className="flex items-center gap-2">
-                                            <Mail className="w-4 h-4" />
-                                            {post.author?.email}
-                                        </p>
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                    {post.description}
+                                </p>
+                            </div>
+
+                            {/* Tags */}
+                            {post.tags && post.tags.length > 0 && (
+                                <div className="mb-6">
+                                    <div className="flex flex-wrap gap-2">
+                                        {post.tags.map((tag, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
                                     </div>
                                 </div>
+                            )}
 
-                                {/* Contact Button */}
-                                {user && user.id !== post.userId && (
-                                    <button
-                                        onClick={handleContact}
-                                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                                    >
-                                        <MessageCircle className="w-5 h-5" />
-                                        Contact Now
-                                    </button>
-                                )}
+                            {/* Author Info */}
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
+                                <div className="flex items-center">
+                                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mr-3 overflow-hidden">
+                                        <img
+                                            src={post.author?.profile_image || '/default-avatar.png'}
+                                            alt={`${post.author?.name}'s profile`}
+                                            className="h-10 w-10 object-cover"
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-900">{post.author?.name}</p>
+                                        <p className="text-sm text-gray-600">{post.author?.email}</p>
+                                        <p className="text-sm text-gray-600">Phone: {post.author?.phone}</p>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Chat Button */}
+                            {user && user.id !== post.userId && (
+                                <button
+                                    onClick={handleStartChat}
+                                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <MessageCircle className="h-5 w-5" />
+                                    Contact {post.type === 'lost' ? 'Owner' : 'Finder'}
+                                </button>
+                            )}
+
+                            {!user && (
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                    Login to Contact {post.type === 'lost' ? 'Owner' : 'Finder'}
+                                </button>
+                            )}
+
+                            {user && user.id === post.userId && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <p className="text-yellow-800 font-medium">This is your post</p>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    {/* Contact Button */}
-                    {user && user.id !== post.userId && (
-                        <div className="mt-6">
-                            <button
-                                onClick={handleContact}
-                                className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                                <MessageCircle className="w-5 h-5" />
-                                Contact {post.category === 'Lost & Found'
-                                    ? post.type === 'lost' ? 'Owner' : 'Finder'
-                                    : 'Owner'}
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
-
-            {showChat && renderChat()}
         </div>
     );
 };
