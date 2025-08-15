@@ -4,6 +4,7 @@ import AuthProvider from './context/AuthContext';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import PostItemPage from './pages/PostItemPage';
+import Community from './pages/Community';
 
 // Pages
 import Home from './pages/Home';
@@ -52,6 +53,15 @@ function App() {
                 <PostItemPage />
               </PrivateRoute>
             } />
+
+
+          {/* Community Section */}
+<Route path="/community" element={
+  <PrivateRoute>
+    <Community />
+  </PrivateRoute>
+} />
+            
 
 
 

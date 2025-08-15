@@ -5,7 +5,10 @@ import Chat from './Chat.js';
 import Message from './Message.js';
 import Accommodation from './Accommodation.js';
 import AccommodationBooking from './AccommodationBooking.js';
+import LostFound from './LostFound.js';
+import BookLend from './BookLend.js';
 
+import CommunityPost from './CommunityPost.js';
 // ------------------- Product Associations -------------------
 User.hasMany(Product, { foreignKey: 'seller_id', as: 'products' });
 Product.belongsTo(User, { foreignKey: 'seller_id', as: 'seller' });
@@ -40,6 +43,21 @@ AccommodationBooking.belongsTo(User, { foreignKey: 'renter_id', as: 'renter' });
 Accommodation.hasMany(Chat, { foreignKey: 'accommodation_id', as: 'chats' });
 Chat.belongsTo(Accommodation, { foreignKey: 'accommodation_id', as: 'accommodation' });
 
+User.hasMany(CommunityPost, { foreignKey: 'userId', as: 'posts' });
+CommunityPost.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+
+
+
+
+User.hasMany(LostFound, { foreignKey: 'posted_by', as: 'lostfound_posts' });
+LostFound.belongsTo(User, { foreignKey: 'posted_by', as: 'poster' });
+
+// Borrow Books
+User.hasMany(BookLend, { foreignKey: 'lender_id', as: 'books_lent' });
+BookLend.belongsTo(User, { foreignKey: 'lender_id', as: 'lender' });
+
+User.hasMany(BookLend, { foreignKey: 'borrower_id', as: 'books_borrowed' });
+BookLend.belongsTo(User, { foreignKey: 'borrower_id', as: 'borrower' });
 // ------------------- Export Models -------------------
 export {
   sequelize,
@@ -48,5 +66,8 @@ export {
   Chat,
   Message,
   Accommodation,
-  AccommodationBooking
+  AccommodationBooking,
+   LostFound,
+  BookLend,
+  CommunityPost, 
 };

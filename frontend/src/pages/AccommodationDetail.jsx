@@ -205,7 +205,7 @@ const AccommodationDetail = () => {
               {!user && (
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full text-yellow-800 font-medium bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full text-yellow-800 font-medium bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors cursor-pointer"
                 >
                   Login to Contact Owner
                 </button>
