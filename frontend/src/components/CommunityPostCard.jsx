@@ -1,12 +1,28 @@
 import React from 'react';
-import { User, Trash, Tag, MapPin, Clock } from 'lucide-react';
+import { User, Trash, Tag, MapPin, Clock, MessageCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const CommunityPostCard = ({ post, currentUser, onDelete }) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const isOwner = currentUser?.id === post.userId;
+
+    const handleContact = () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        // Navigate to chat with the post owner
+        navigate(`/chats?with=${post.userId}&about=${post.title}`);
+    };
 
     return (
         <div className="bg-white shadow-md rounded-lg p-4 mb-4 border border-gray-200">
-            <div className="flex justify-between items-start">
+            <div
+                className="flex justify-between items-start cursor-pointer"
+                onClick={() => navigate(`/community/${post.id}`)}
+            >
                 {/* Post Info */}
                 <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
@@ -72,6 +88,38 @@ const CommunityPostCard = ({ post, currentUser, onDelete }) => {
                     <button onClick={() => onDelete(post.id)} className="text-red-500 hover:text-red-700 ml-4">
                         <Trash />
                     </button>
+                )}
+            </div>
+
+            {/* Move contact buttons outside the clickable area */}
+            <div onClick={e => e.stopPropagation()}>
+                {/* Contact Button - Add this before the closing div */}
+                {!isOwner && user && (
+                    <div className="mt-4 border-t pt-4">
+                        <button
+                            onClick={handleContact}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            <MessageCircle className="h-4 w-4" />
+                            {post.category === 'Lost & Found'
+                                ? post.type === 'lost'
+                                    ? "I Found This!"
+                                    : "I Lost This!"
+                                : "Contact Owner"
+                            }
+                        </button>
+                    </div>
+                )}
+
+                {!user && (
+                    <div className="mt-4 border-t pt-4">
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="text-blue-600 hover:underline"
+                        >
+                            Login to contact the {post.type === 'lost' ? 'owner' : 'finder'}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

@@ -18,16 +18,20 @@ const Community = () => {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Update initial state
     const [newPost, setNewPost] = useState({
         title: '',
         description: '',
         category: 'Lost & Found',
+        type: 'lost', // Add this field
         priority: 'normal',
         location: '',
         tags: [],
-        images: [], // This will store the uploaded image files
+        images: [],
         tagInput: '',
     });
+
+    const categories = ['Lost & Found', 'Borrow Books']; // Removed Events, General Discussion, and Requests
 
     useEffect(() => {
         loadPosts();
@@ -77,6 +81,7 @@ const Community = () => {
                 title: '',
                 description: '',
                 category: 'Lost & Found',
+                type: 'lost',
                 priority: 'normal',
                 location: '',
                 tags: [],
@@ -224,10 +229,27 @@ const Community = () => {
                         onChange={e => setNewPost({ ...newPost, category: e.target.value })}
                         className="w-full border border-gray-300 rounded px-3 py-2"
                     >
-                        {['Lost & Found', 'Borrow Books', 'Events', 'General Discussion', 'Requests'].map(cat => (
-                            <option key={cat}>{cat}</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>
+
+                    {/* Add this conditional field for Lost & Found posts */}
+                    {newPost.category === 'Lost & Found' && (
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Type
+                            </label>
+                            <select
+                                value={newPost.type}
+                                onChange={(e) => setNewPost({ ...newPost, type: e.target.value })}
+                                className="w-full border border-gray-300 rounded px-3 py-2"
+                            >
+                                <option value="lost">I Lost Something</option>
+                                <option value="found">I Found Something</option>
+                            </select>
+                        </div>
+                    )}
 
                     <select
                         value={newPost.priority}
@@ -259,11 +281,13 @@ const Community = () => {
 
             {/* Category Filter */}
             <div className="flex flex-wrap gap-2 mb-4">
-                {['All', 'Lost & Found', 'Borrow Books', 'Events', 'General Discussion', 'Requests'].map(cat => (
+                {['All', ...categories].map(cat => (
                     <button
                         key={cat}
                         onClick={() => setCategoryFilter(cat)}
-                        className={`px-3 py-1 rounded ${categoryFilter === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                        className={`px-3 py-1 rounded ${categoryFilter === cat
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700'
                             }`}
                     >
                         {cat}

@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import PostItemPage from './pages/PostItemPage';
 import Community from './pages/Community';
+import CommunityPostDetail from './pages/CommunityPostDetail';
 
 // Pages
 import Home from './pages/Home';
@@ -43,7 +44,7 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/accommodations" element={<AccommodationList />} />
             {/* <Route path="/accommodations/create" element={<CreateAccommodation />} /> */}
-          <Route path="/accommodation/:id" element={<AccommodationDetail />} />
+            <Route path="/accommodation/:id" element={<AccommodationDetail />} />
             <Route path="/accommodations/bookings/my" element={<MyBookings />} />
             {/* <Route path="/accommodations/bookings/owner" element={<OwnerDashboard />} /> */}
 
@@ -55,13 +56,14 @@ function App() {
             } />
 
 
-          {/* Community Section */}
-<Route path="/community" element={
-  <PrivateRoute>
-    <Community />
-  </PrivateRoute>
-} />
-            
+            {/* Community Section */}
+            <Route path="/community" element={
+              <PrivateRoute>
+                <Community />
+              </PrivateRoute>
+            } />
+            <Route path="/community/:id" element={<CommunityPostDetail />} />
+
 
 
 

@@ -81,18 +81,19 @@ export const getCommunityPostById = async (req, res) => {
         {
           model: User,
           as: "author",
-          attributes: ["id", "name", "profile_image"],
+          attributes: ["id", "name", "email", "phone", "profile_image"],
         },
       ],
     });
-    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
     res.json(post);
   } catch (error) {
-    console.error("Error in getCommunityPostById:", error);
-    res.status(500).json({
-      message: "Error fetching post",
-      error: error.message,
-    });
+    console.error("Error fetching post:", error);
+    res.status(500).json({ message: "Error fetching post details" });
   }
 };
 
