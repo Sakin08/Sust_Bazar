@@ -282,3 +282,34 @@ export const toggleLikePost = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
+// -------------------- Delete Comment --------------------
+export const deleteComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const userId = req.user.id;
+
+    // Find the comment
+    const comment = await Comment.findOne({
+      where: { id: commentId, postId },
+    });
+
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    // Only the comment author or admin can delete
+    if (comment.userId !== userId && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to delete this comment" });
+    }
+
+    await comment.destroy();
+
+    // Emit real-time event
+    req.app.get("io")?.emit("commentDeleted", { postId, commentId });
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    console.error("Delete comment error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};

@@ -8,6 +8,7 @@ import {
   getNotifications,
   markNotificationRead,
   toggleLikePost,
+  deleteComment,
 } from "../controllers/communityController.js";
 
 import { authenticate } from "../middleware/auth.js";
@@ -24,6 +25,7 @@ router.delete("/:postId", authenticate, deletePost);
 router.post("/:postId/like", authenticate, toggleLikePost);
 router.post("/:postId/share", authenticate, sharePost);
 router.post("/:postId/comment", authenticate, addComment);
+router.delete("/:postId/comment/:commentId", authenticate, deleteComment);
 
 // Notifications
 router.get("/notifications", authenticate, getNotifications);

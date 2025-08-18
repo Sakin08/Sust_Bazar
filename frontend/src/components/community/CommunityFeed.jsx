@@ -34,6 +34,7 @@ const CommunityFeed = ({ posts: initialPosts }) => {
     fetchAllPosts();
   }, []);
 
+  // -------------------- Post Actions --------------------
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem("token");
@@ -96,7 +97,32 @@ const CommunityFeed = ({ posts: initialPosts }) => {
     }
   };
 
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:3001/api/community/${postId}/comment/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, comments: post.comments.filter((c) => c.id !== commentId) }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error("Delete comment error:", err.response?.data || err);
+      alert(err.response?.data?.message || "Error deleting comment");
+    }
+  };
+
   if (loading) return <p>Loading posts...</p>;
+
+  const currentUser = JSON.parse(localStorage.getItem("user"));
 
   return (
     <div className="space-y-6">
@@ -135,9 +161,9 @@ const CommunityFeed = ({ posts: initialPosts }) => {
 
             {post.images?.length > 0 && (
               <div className="grid grid-cols-2 gap-2 mb-3">
-                {post.images.map((img, idx) => (
+                {post.images.map((img) => (
                   <img
-                    key={idx}
+                    key={img}
                     src={img}
                     alt="post"
                     className="w-full rounded-lg object-cover"
@@ -149,8 +175,8 @@ const CommunityFeed = ({ posts: initialPosts }) => {
             {/* Stats */}
             <div className="flex justify-between text-sm text-gray-600 mb-2">
               <span>{post.likesCount} Likes</span>
-              <span>{post.comments?.length || 0} Comments</span>
               <span>{post.shares?.length || 0} Shares</span>
+              <span>{post.comments?.length || 0} Comments</span>
             </div>
 
             <hr />
@@ -198,20 +224,33 @@ const CommunityFeed = ({ posts: initialPosts }) => {
 
               <div className="mt-2 space-y-2">
                 {commentsToShow?.map((c) => (
-                  <div key={c.id} className="flex items-center space-x-2 text-sm">
-                    <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200">
-                      <img
-                        src={c.author?.profile_image || "/default-avatar.png"}
-                        alt={c.author?.name || "User"}
-                        className="w-full h-full object-cover"
-                      />
+                  <div
+                    key={c.id || `${post.id}-cmt-${Math.random()}`}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200">
+                        <img
+                          src={c.author?.profile_image || "/default-avatar.png"}
+                          alt={c.author?.name || "User"}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p>
+                        <span className="font-semibold">
+                          {c.author?.name || "Anonymous"}
+                        </span>
+                        : {c.content}
+                      </p>
                     </div>
-                    <p>
-                      <span className="font-semibold">
-                        {c.author?.name || "Anonymous"}
-                      </span>
-                      : {c.content}
-                    </p>
+                    {(c.author?.id === currentUser?.id || currentUser?.role === "admin") && (
+                      <button
+                        onClick={() => handleDeleteComment(post.id, c.id)}
+                        className="text-red-500 text-xs ml-2"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 ))}
 
