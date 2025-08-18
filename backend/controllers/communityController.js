@@ -1,160 +1,283 @@
-import { CommunityPost, User } from "../models/index.js";
-import { Op } from "sequelize";
-import multer from "multer";
-import path from "path";
+import { CommunityPost, Comment, Like, Share, Notification, User } from "../models/index.js";
 
-// multer configuration for image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed!"));
-    }
-  },
-}).array("images", 5); // Max 5 images
-
-// GET all posts with optional search and category filter
-export const getAllCommunityPosts = async (req, res) => {
+// -------------------- Fetch Community Posts --------------------
+export const fetchCommunityPosts = async (req, res) => {
   try {
-    console.log("Received query:", req.query);
-    const { search, category } = req.query;
+    const { search = "", category = "All" } = req.query;
 
-    let whereClause = {};
-
-    // Add search condition if search query exists
+    const whereClause = {};
     if (search) {
-      whereClause = {
-        [Op.or]: [
-          { title: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } },
-        ],
-      };
+      whereClause.title = { [Op.like]: `%${search}%` };
     }
-
-    // Add category condition if category is specified and not 'All'
     if (category && category !== "All") {
       whereClause.category = category;
     }
 
-    console.log("Using where clause:", whereClause);
-
     const posts = await CommunityPost.findAll({
       where: whereClause,
       include: [
-        {
-          model: User,
-          as: "author",
-          attributes: ["id", "name", "profile_image"],
-        },
+        { model: User, as: "author", attributes: ["id", "name"] },
+        { model: Comment, as: "comments" },
+        { model: Like, as: "likes" },
+        { model: Share, as: "shares" },
       ],
       order: [["createdAt", "DESC"]],
     });
 
-    console.log(`Found ${posts.length} posts`);
-    return res.json(posts);
-  } catch (error) {
-    console.error("Error in getAllCommunityPosts:", error);
-    return res.status(500).json({
-      message: "Failed to fetch posts",
-      error: error.message,
-    });
+    res.json(posts);
+  } catch (err) {
+    console.error("Fetch posts error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
 
-// GET post by ID
-export const getCommunityPostById = async (req, res) => {
-  try {
-    const post = await CommunityPost.findByPk(req.params.id, {
-      include: [
-        {
-          model: User,
-          as: "author",
-          attributes: ["id", "name", "email", "phone", "profile_image"],
-        },
-      ],
-    });
+// -------------------- Create Community Post --------------------
+//import { CommunityPost, User, Notification } from "../models/index.js";
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    res.json(post);
-  } catch (error) {
-    console.error("Error fetching post:", error);
-    res.status(500).json({ message: "Error fetching post details" });
-  }
-};
-
-// POST create new
 export const createCommunityPost = async (req, res) => {
   try {
-    upload(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ message: err.message });
-      }
+    const userId = req.user.id;
+    const { title, description, category, tags } = req.body;
 
-      const imageFiles = req.files.map((file) => file.filename);
+    // Upload images to Cloudinary
+    const imageFiles = req.files || [];
+    const imageUrls = await Promise.all(
+      imageFiles.map((file) => uploadBufferToCloudinary(file.buffer, "community"))
+    );
 
-      const post = await CommunityPost.create({
-        ...req.body,
-        images: imageFiles,
-        userId: req.user.id,
-        tags: JSON.parse(req.body.tags || "[]"),
-      });
-
-      const postWithAuthor = await CommunityPost.findByPk(post.id, {
-        include: [
-          {
-            model: User,
-            as: "author",
-            attributes: ["id", "name", "profile_image"],
-          },
-        ],
-      });
-
-      res.status(201).json(postWithAuthor);
+    const post = await CommunityPost.create({
+      title,
+      description,
+      category,
+      tags: tags ? tags.split(",").map((t) => t.trim()) : [],
+      images: imageUrls.map((img) => img.secure_url),
+      userId,
     });
-  } catch (error) {
-    console.error("Error in createCommunityPost:", error);
-    res.status(500).json({
-      message: "Error creating post",
-      error: error.message,
+
+    const postWithAuthor = await CommunityPost.findByPk(post.id, {
+      include: [{ model: User, as: "author", attributes: ["id", "name"] }],
     });
+
+    req.app.get("io")?.emit("newPost", postWithAuthor);
+
+    res.status(201).json(postWithAuthor);
+  } catch (err) {
+    console.error("Create post error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
 
-// DELETE post
-export const deleteCommunityPost = async (req, res) => {
-  try {
-    const post = await CommunityPost.findByPk(req.params.id);
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+// -------------------- Like a Post --------------------
+export const likePost = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = req.params.postId;
+
+    const post = await CommunityPost.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const existingLike = await Like.findOne({ where: { userId, postId } });
+    if (existingLike) return res.status(400).json({ message: "Already liked" });
+
+    const like = await Like.create({ userId, postId });
+
+    if (post.userId !== userId) {
+      await Notification.create({
+        type: "like",
+        message: `${req.user.name} liked your post`,
+        userId: post.userId,
+        senderId: userId,
+      });
     }
 
-    if (post.userId !== req.user.id) {
+    req.app.get("io")?.emit("postLiked", { postId, userId });
+
+    res.status(201).json(like);
+  } catch (err) {
+    console.error("Like post error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+// -------------------- Share a Post --------------------
+export const sharePost = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = req.params.postId;
+
+    const post = await CommunityPost.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const share = await Share.create({ userId, postId });
+
+    if (post.userId !== userId) {
+      await Notification.create({
+        type: "share",
+        message: `${req.user.name} shared your post`,
+        userId: post.userId,
+        senderId: userId,
+      });
+    }
+
+    req.app.get("io")?.emit("postShared", { postId, userId });
+
+    res.status(201).json(share);
+  } catch (err) {
+    console.error("Share post error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+// -------------------- Add Comment --------------------
+export const addComment = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = req.params.postId;
+    const { content } = req.body;
+
+    const post = await CommunityPost.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = await Comment.create({ content, userId, postId });
+
+    const commentWithAuthor = await Comment.findByPk(comment.id, {
+      include: [{ model: User, as: "author", attributes: ["id", "name"] }],
+    });
+
+    if (post.userId !== userId) {
+      await Notification.create({
+        type: "comment",
+        message: `${req.user.name} commented on your post`,
+        userId: post.userId,
+        senderId: userId,
+      });
+    }
+
+    req.app.get("io")?.emit("newComment", { postId, comment: commentWithAuthor });
+
+    res.status(201).json(commentWithAuthor);
+  } catch (err) {
+    console.error("Add comment error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+// -------------------- Delete Post --------------------
+export const deletePost = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = req.params.postId;
+
+    const post = await CommunityPost.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    if (post.userId !== userId && req.user.role !== "admin") {
       return res.status(403).json({ message: "Not authorized" });
     }
 
     await post.destroy();
-    res.json({ message: "Post deleted successfully" });
-  } catch (error) {
-    console.error("Error in deleteCommunityPost:", error);
-    res.status(500).json({
-      message: "Error deleting post",
-      error: error.message,
+
+    req.app.get("io")?.emit("postDeleted", { postId });
+
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("Delete post error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+
+
+// -------------------- Get User Notifications --------------------
+export const getNotifications = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const notifications = await Notification.findAll({
+      where: { userId },
+      include: [
+        { model: User, as: "sender", attributes: ["id", "name"] }
+      ],
+      order: [["createdAt", "DESC"]],
     });
+
+    res.json(notifications);
+  } catch (err) {
+    console.error("Fetch notifications error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+// -------------------- Mark Notification as Read --------------------
+export const markNotificationRead = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notificationId = req.params.notificationId;
+
+    const notification = await Notification.findOne({ where: { id: notificationId, userId } });
+    if (!notification) return res.status(404).json({ message: "Notification not found" });
+
+    notification.read = true;
+    await notification.save();
+
+    res.status(200).json({ message: "Notification marked as read" });
+  } catch (err) {
+    console.error("Mark notification read error:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+
+// -------------------- Toggle Like --------------------
+export const toggleLikePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+
+    const post = await CommunityPost.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // Check if user already liked this post
+    const existingLike = await Like.findOne({
+      where: { postId, userId },
+    });
+
+    if (existingLike) {
+      // If already liked → remove like
+      await existingLike.destroy();
+
+      req.app.get("io")?.emit("postUnliked", { postId, userId });
+
+      return res.json({
+        success: true,
+        message: "Unliked",
+        liked: false,
+      });
+    } else {
+      // If not liked → create like
+      await Like.create({ postId, userId });
+
+      if (post.userId !== userId) {
+        await Notification.create({
+          type: "like",
+          message: `${req.user.name} liked your post`,
+          userId: post.userId,
+          senderId: userId,
+        });
+      }
+
+      req.app.get("io")?.emit("postLiked", { postId, userId });
+
+      return res.json({
+        success: true,
+        message: "Liked",
+        liked: true,
+      });
+    }
+  } catch (error) {
+    console.error("Toggle like error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

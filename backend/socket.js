@@ -2,8 +2,10 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { User, Chat, Message } from './models/index.js';
 
+let io; // <- declare io in module scope
+
 export function initializeSocket(server) {
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: {
       origin: "http://localhost:5173",
       methods: ["GET", "POST"],
@@ -70,3 +72,6 @@ export function initializeSocket(server) {
 
   return io;
 }
+
+// Add this line so other files can import io
+export { io };

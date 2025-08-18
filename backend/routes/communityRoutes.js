@@ -1,23 +1,32 @@
 import express from "express";
-import { authenticate } from "../middleware/auth.js";
 import {
-  getAllCommunityPosts,
   createCommunityPost,
-  getCommunityPostById,
-  deleteCommunityPost,
+  fetchCommunityPosts,
+  deletePost,
+  sharePost,
+  addComment,
+  getNotifications,
+  markNotificationRead,
+  toggleLikePost,
 } from "../controllers/communityController.js";
+
+import { authenticate } from "../middleware/auth.js";
+import { uploadMemory } from "../middleware/multer.js"; // <- import memory upload
 
 const router = express.Router();
 
-// Debug middleware
-router.use((req, res, next) => {
-  console.log(`Community Route: ${req.method} ${req.url}`);
-  next();
-});
+// Community posts
+router.get("/", authenticate, fetchCommunityPosts);
+router.post("/", authenticate, uploadMemory.array("images"), createCommunityPost); // <- use multer
+router.delete("/:postId", authenticate, deletePost);
 
-router.get("/", getAllCommunityPosts); // Keep this as the first route
-router.post("/", authenticate, createCommunityPost);
-router.get("/:id", getCommunityPostById);
-router.delete("/:id", authenticate, deleteCommunityPost);
+// Actions
+router.post("/:postId/like", authenticate, toggleLikePost);
+router.post("/:postId/share", authenticate, sharePost);
+router.post("/:postId/comment", authenticate, addComment);
+
+// Notifications
+router.get("/notifications", authenticate, getNotifications);
+router.post("/notifications/:id/read", authenticate, markNotificationRead);
 
 export default router;

@@ -3,10 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AuthProvider from './context/AuthContext';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
-import PostItemPage from './pages/PostItemPage';
-import Community from './pages/Community';
-import CommunityPostDetail from './pages/CommunityPostDetail';
-import EventsPage from './pages/EventsPage'; // <-- import EventsPage
 
 // Pages
 import Home from './pages/Home';
@@ -18,8 +14,12 @@ import Chats from './pages/Chats';
 import ChatRoom from './pages/ChatRoom';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
+import PostItemPage from './pages/PostItemPage';
+import CommunityPage from './pages/CommunityPage';
+import CommunityPostDetail from './pages/CommunityPostDetail';
+import EventsPage from './pages/EventsPage';
 
-// Accommodation pages
+// Accommodation Pages
 import AccommodationList from './pages/AccommodationList';
 import AccommodationDetail from './pages/AccommodationDetail';
 import MyBookings from './pages/MyBookings';
@@ -41,55 +41,82 @@ function App() {
             <Route path="/accommodations/bookings/my" element={<MyBookings />} />
 
             {/* Private Routes */}
-            <Route path="/post" element={
-              <PrivateRoute>
-                <PostItemPage />
-              </PrivateRoute>
-            } />
-            <Route path="/community" element={
-              <PrivateRoute>
-                <Community />
-              </PrivateRoute>
-            } />
-            <Route path="/community/:id" element={
-              <PrivateRoute>
-                <CommunityPostDetail />
-              </PrivateRoute>
-            } />
-            <Route path="/profile" element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            } />
-            <Route path="/my-products" element={
-              <PrivateRoute>
-                <MyItems />
-              </PrivateRoute>
-            } />
-            <Route path="/chats" element={
-              <PrivateRoute>
-                <Chats />
-              </PrivateRoute>
-            } />
-            <Route path="/chat/:chatId" element={
-              <PrivateRoute>
-                <ChatRoom />
-              </PrivateRoute>
-            } />
+            <Route
+              path="/post"
+              element={
+                <PrivateRoute>
+                  <PostItemPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/community"
+              element={
+                <PrivateRoute>
+                  <CommunityPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/community/:id"
+              element={
+                <PrivateRoute>
+                  <CommunityPostDetail />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/my-products"
+              element={
+                <PrivateRoute>
+                  <MyItems />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chats"
+              element={
+                <PrivateRoute>
+                  <Chats />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat/:chatId"
+              element={
+                <PrivateRoute>
+                  <ChatRoom />
+                </PrivateRoute>
+              }
+            />
 
             {/* Events */}
-            <Route path="/events" element={
-              <PrivateRoute>
-                <EventsPage />
-              </PrivateRoute>
-            } />
+            <Route
+              path="/events"
+              element={
+                <PrivateRoute>
+                  <EventsPage />
+                </PrivateRoute>
+              }
+            />
 
             {/* Admin Route */}
-            <Route path="/admin" element={
-              <PrivateRoute adminOnly={true}>
-                <Admin />
-              </PrivateRoute>
-            } />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute adminOnly={true}>
+                  <Admin />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>
