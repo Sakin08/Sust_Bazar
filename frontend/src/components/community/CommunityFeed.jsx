@@ -104,13 +104,22 @@ const CommunityFeed = ({ posts: initialPosts, fetchPosts }) => {
           className="bg-white shadow rounded-2xl p-4 border border-gray-200"
         >
           {/* Header */}
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
-            <div>
-              <p className="font-semibold text-gray-800">{post.author?.name}</p>
-              <p className="text-xs text-gray-500">Just now</p>
-            </div>
-          </div>
+          {/* Header */}
+<div className="flex items-center space-x-3 mb-3">
+  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+    <img
+      src={post.author?.profile_image || '/default-avatar.png'}
+      alt={post.author?.name || 'User'}
+      className="w-full h-full object-cover"
+    />
+  </div>
+  <div>
+    <p className="font-semibold text-gray-800">{post.author?.name || 'Anonymous'}</p>
+    <p className="text-xs text-gray-500">
+      {new Date(post.createdAt).toLocaleString() || 'Just now'}
+    </p>
+  </div>
+</div>
 
           {/* Content */}
           <h3 className="text-lg font-bold text-gray-900">{post.title}</h3>

@@ -13,16 +13,17 @@ export const fetchCommunityPosts = async (req, res) => {
       whereClause.category = category;
     }
 
-    const posts = await CommunityPost.findAll({
-      where: whereClause,
-      include: [
-        { model: User, as: "author", attributes: ["id", "name"] },
-        { model: Comment, as: "comments" },
-        { model: Like, as: "likes" },
-        { model: Share, as: "shares" },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
+  const posts = await CommunityPost.findAll({
+  where: whereClause,
+  include: [
+    { model: User, as: "author", attributes: ["id", "name", "profile_image"] }, // <-- added profile_image
+    { model: Comment, as: "comments", include: [{ model: User, as: "author", attributes: ["id","name","profile_image"] }] }, // optional: include author pic for comments
+    { model: Like, as: "likes" },
+    { model: Share, as: "shares" },
+  ],
+  order: [["createdAt", "DESC"]],
+});
+
 
     res.json(posts);
   } catch (err) {
@@ -56,7 +57,7 @@ export const createCommunityPost = async (req, res) => {
     });
 
     const postWithAuthor = await CommunityPost.findByPk(post.id, {
-      include: [{ model: User, as: "author", attributes: ["id", "name"] }],
+      include: [{ model: User, as: "author", attributes: ["id", "name","profile_image"] }],
     });
 
     req.app.get("io")?.emit("newPost", postWithAuthor);
