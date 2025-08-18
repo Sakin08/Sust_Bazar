@@ -144,7 +144,7 @@ export const addComment = async (req, res) => {
     const comment = await Comment.create({ content, userId, postId });
 
     const commentWithAuthor = await Comment.findByPk(comment.id, {
-      include: [{ model: User, as: "author", attributes: ["id", "name"] }],
+      include: [{ model: User, as: "author", attributes: ["id", "name","profile_image"] }],
     });
 
     if (post.userId !== userId) {
