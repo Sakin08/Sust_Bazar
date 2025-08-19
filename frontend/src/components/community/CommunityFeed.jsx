@@ -5,7 +5,7 @@ import axios from "axios";
 const CommunityFeed = ({ posts: initialPosts }) => {
   const [posts, setPosts] = useState(initialPosts || []);
   const [loading, setLoading] = useState(true);
-  const [showAllComments, setShowAllComments] = useState({}); // track which posts show all comments
+  const [showAllComments, setShowAllComments] = useState({});
   const navigate = useNavigate();
 
   // Fetch all posts
@@ -36,7 +36,9 @@ const CommunityFeed = ({ posts: initialPosts }) => {
     fetchAllPosts();
   }, []);
 
-  // -------------------- Post Actions --------------------
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  // -------------------- Actions --------------------
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem("token");
@@ -51,16 +53,14 @@ const CommunityFeed = ({ posts: initialPosts }) => {
           post.id === postId
             ? {
                 ...post,
-                likesCount: res.data.liked
-                  ? post.likesCount + 1
-                  : post.likesCount - 1,
+                likesCount: res.data.liked ? post.likesCount + 1 : post.likesCount - 1,
                 likedByUser: res.data.liked,
               }
             : post
         )
       );
     } catch (err) {
-      console.error("Like post error:", err.response?.data || err.message);
+      console.error(err);
     }
   };
 
@@ -74,8 +74,8 @@ const CommunityFeed = ({ posts: initialPosts }) => {
       );
       alert("Post shared!");
     } catch (err) {
-      console.error("Share post error:", err.response?.data || err);
-      alert(err.response?.data?.message || "Error sharing post");
+      console.error(err);
+      alert("Error sharing post");
     }
   };
 
@@ -94,8 +94,8 @@ const CommunityFeed = ({ posts: initialPosts }) => {
         )
       );
     } catch (err) {
-      console.error("Add comment error:", err.response?.data || err);
-      alert(err.response?.data?.message || "Error adding comment");
+      console.error(err);
+      alert("Error adding comment");
     }
   };
 
@@ -117,21 +117,36 @@ const CommunityFeed = ({ posts: initialPosts }) => {
         )
       );
     } catch (err) {
-      console.error("Delete comment error:", err.response?.data || err);
-      alert(err.response?.data?.message || "Error deleting comment");
+      console.error(err);
+      alert("Error deleting comment");
     }
   };
 
-  if (loading) return <p>Loading posts...</p>;
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
 
-  const currentUser = JSON.parse(localStorage.getItem("user"));
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:3001/api/community/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      alert("Post deleted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting post");
+    }
+  };
+
+  if (loading) return <p className="text-center mt-10">Loading posts...</p>;
 
   return (
     <div className="space-y-6">
       {posts.map((post) => {
         const commentsToShow = showAllComments[post.id]
           ? post.comments
-          : post.comments?.slice(0, 2); // show only first 2 comments initially
+          : post.comments?.slice(0, 2);
 
         return (
           <div
@@ -154,13 +169,19 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                 className="cursor-pointer"
                 onClick={() => navigate(`/profile/${post.author?.id}`)}
               >
-                <p className="font-semibold text-gray-800">
-                  {post.author?.name || "Anonymous"}
-                </p>
+                <p className="font-semibold text-gray-800">{post.author?.name}</p>
                 <p className="text-xs text-gray-500">
-                  {new Date(post.createdAt).toLocaleString() || "Just now"}
+                  {new Date(post.createdAt).toLocaleString()}
                 </p>
               </div>
+              {(post.author?.id === currentUser?.id || currentUser?.role === "admin") && (
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="ml-auto text-red-500 text-sm font-medium"
+                >
+                  Delete Post
+                </button>
+              )}
             </div>
 
             {/* Post Content */}
@@ -168,18 +189,17 @@ const CommunityFeed = ({ posts: initialPosts }) => {
             <p className="text-gray-700 mb-3">{post.description}</p>
 
             {post.images?.length > 0 && (
-  <div className="grid grid-cols-2 gap-2 mb-3">
-    {post.images.map((img, index) => (
-      <img
-        key={index}
-        src={img}
-        alt="post"
-        className="w-full rounded-lg object-cover"
-      />
-    ))}
-  </div>
-)}
-
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {post.images.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt="post"
+                    className="w-full rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Stats */}
             <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -230,7 +250,6 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                   }
                 }}
               />
-
               <div className="mt-2 space-y-2">
                 {commentsToShow?.map((c) => (
                   <div
@@ -253,7 +272,7 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                           className="font-semibold cursor-pointer"
                           onClick={() => navigate(`/profile/${c.author?.id}`)}
                         >
-                          {c.author?.name || "Anonymous"}
+                          {c.author?.name}
                         </span>
                         : {c.content}
                       </p>
@@ -268,7 +287,6 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                     )}
                   </div>
                 ))}
-
                 {post.comments?.length > 2 && !showAllComments[post.id] && (
                   <button
                     className="text-blue-600 text-sm mt-1"
