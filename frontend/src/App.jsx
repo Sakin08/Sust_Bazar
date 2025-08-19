@@ -23,6 +23,7 @@ import EventsPage from './pages/EventsPage';
 import AccommodationList from './pages/AccommodationList';
 import AccommodationDetail from './pages/AccommodationDetail';
 import MyBookings from './pages/MyBookings';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -65,14 +66,24 @@ function App() {
                 </PrivateRoute>
               }
             />
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              }
-            />
+            {/* Profile Routes */}
+<Route
+  path="/profile"
+  element={
+    <PrivateRoute>
+      <Profile />
+    </PrivateRoute>
+  }
+/>
+<Route
+  path="/profile/:id"
+  element={
+    <PrivateRoute>
+      <ProfilePage />
+    </PrivateRoute>
+  }
+/>
+
             <Route
               path="/my-products"
               element={

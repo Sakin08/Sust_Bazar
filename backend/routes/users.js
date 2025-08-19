@@ -1,6 +1,14 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, updateUserProfile } from '../controllers/userController.js';
+import { 
+  register, 
+  login, 
+  getProfile, 
+  updateUserProfile, 
+  getUserProfile,
+  getAllUsers,
+  toggleUserBan
+} from '../controllers/userController.js';
 import { authenticate } from '../middleware/auth.js';
 import multer from 'multer';
 
@@ -36,7 +44,6 @@ const registerValidation = [
   body('address').optional().trim(),
 ];
 
-
 const loginValidation = [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required'),
@@ -48,6 +55,13 @@ router.post('/login', loginValidation, login);
 
 // Protected user routes
 router.get('/profile', authenticate, getProfile);
-router.put("/update-profile", authenticate, upload.single("image"), updateUserProfile);
+router.put('/update-profile', authenticate, upload.single("image"), updateUserProfile);
+
+// Admin routes
+router.get('/all', authenticate, getAllUsers); // Changed from "/" to "/all"
+router.patch('/:id/ban', authenticate, toggleUserBan);
+
+// Get user profile by ID (this should be LAST to avoid conflicts)
+router.get('/:id', authenticate, getUserProfile);
 
 export default router;

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const CommunityFeed = ({ posts: initialPosts }) => {
   const [posts, setPosts] = useState(initialPosts || []);
   const [loading, setLoading] = useState(true);
   const [showAllComments, setShowAllComments] = useState({}); // track which posts show all comments
+  const navigate = useNavigate();
 
   // Fetch all posts
   const fetchAllPosts = async () => {
@@ -138,14 +140,20 @@ const CommunityFeed = ({ posts: initialPosts }) => {
           >
             {/* Post Header */}
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+              <div
+                className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 cursor-pointer"
+                onClick={() => navigate(`/profile/${post.author?.id}`)}
+              >
                 <img
                   src={post.author?.profile_image || "/default-avatar.png"}
                   alt={post.author?.name || "User"}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div>
+              <div
+                className="cursor-pointer"
+                onClick={() => navigate(`/profile/${post.author?.id}`)}
+              >
                 <p className="font-semibold text-gray-800">
                   {post.author?.name || "Anonymous"}
                 </p>
@@ -160,23 +168,24 @@ const CommunityFeed = ({ posts: initialPosts }) => {
             <p className="text-gray-700 mb-3">{post.description}</p>
 
             {post.images?.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {post.images.map((img) => (
-                  <img
-                    key={img}
-                    src={img}
-                    alt="post"
-                    className="w-full rounded-lg object-cover"
-                  />
-                ))}
-              </div>
-            )}
+  <div className="grid grid-cols-2 gap-2 mb-3">
+    {post.images.map((img, index) => (
+      <img
+        key={index}
+        src={img}
+        alt="post"
+        className="w-full rounded-lg object-cover"
+      />
+    ))}
+  </div>
+)}
+
 
             {/* Stats */}
             <div className="flex justify-between text-sm text-gray-600 mb-2">
               <span>{post.likesCount} Likes</span>
-              <span>{post.shares?.length || 0} Shares</span>
               <span>{post.comments?.length || 0} Comments</span>
+              <span>{post.shares?.length || 0} Shares</span>
             </div>
 
             <hr />
@@ -229,7 +238,10 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                     className="flex items-center justify-between text-sm"
                   >
                     <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200">
+                      <div
+                        className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 cursor-pointer"
+                        onClick={() => navigate(`/profile/${c.author?.id}`)}
+                      >
                         <img
                           src={c.author?.profile_image || "/default-avatar.png"}
                           alt={c.author?.name || "User"}
@@ -237,7 +249,10 @@ const CommunityFeed = ({ posts: initialPosts }) => {
                         />
                       </div>
                       <p>
-                        <span className="font-semibold">
+                        <span
+                          className="font-semibold cursor-pointer"
+                          onClick={() => navigate(`/profile/${c.author?.id}`)}
+                        >
                           {c.author?.name || "Anonymous"}
                         </span>
                         : {c.content}

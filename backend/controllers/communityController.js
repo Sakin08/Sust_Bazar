@@ -1,4 +1,6 @@
 import { CommunityPost, Comment, Like, Share, Notification, User } from "../models/index.js";
+import { Op } from "sequelize"; // Added missing import
+import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
 
 // -------------------- Fetch Community Posts --------------------
 export const fetchCommunityPosts = async (req, res) => {
@@ -13,17 +15,16 @@ export const fetchCommunityPosts = async (req, res) => {
       whereClause.category = category;
     }
 
-  const posts = await CommunityPost.findAll({
-  where: whereClause,
-  include: [
-    { model: User, as: "author", attributes: ["id", "name", "profile_image"] }, // <-- added profile_image
-    { model: Comment, as: "comments", include: [{ model: User, as: "author", attributes: ["id","name","profile_image"] }] }, // optional: include author pic for comments
-    { model: Like, as: "likes" },
-    { model: Share, as: "shares" },
-  ],
-  order: [["createdAt", "DESC"]],
-});
-
+    const posts = await CommunityPost.findAll({
+      where: whereClause,
+      include: [
+        { model: User, as: "author", attributes: ["id", "name", "profile_image"] },
+        { model: Comment, as: "comments", include: [{ model: User, as: "author", attributes: ["id","name","profile_image"] }] },
+        { model: Like, as: "likes" },
+        { model: Share, as: "shares" },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
 
     res.json(posts);
   } catch (err) {
@@ -33,9 +34,6 @@ export const fetchCommunityPosts = async (req, res) => {
 };
 
 // -------------------- Create Community Post --------------------
-//import { CommunityPost, User, Notification } from "../models/index.js";
-import { uploadBufferToCloudinary } from "../utils/cloudinaryUpload.js";
-
 export const createCommunityPost = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -47,15 +45,17 @@ export const createCommunityPost = async (req, res) => {
       imageFiles.map((file) => uploadBufferToCloudinary(file.buffer, "community"))
     );
 
+    // Only store secure_url from Cloudinary
     const post = await CommunityPost.create({
       title,
       description,
       category,
       tags: tags ? tags.split(",").map((t) => t.trim()) : [],
-      images: imageUrls.map((img) => img.secure_url),
+      images: imageUrls.map((img) => img.secure_url), // ✅ only URLs
       userId,
     });
 
+    // Include author for response
     const postWithAuthor = await CommunityPost.findByPk(post.id, {
       include: [{ model: User, as: "author", attributes: ["id", "name","profile_image"] }],
     });
@@ -68,7 +68,6 @@ export const createCommunityPost = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
-
 
 // -------------------- Like a Post --------------------
 export const likePost = async (req, res) => {
@@ -189,8 +188,6 @@ export const deletePost = async (req, res) => {
   }
 };
 
-
-
 // -------------------- Get User Notifications --------------------
 export const getNotifications = async (req, res) => {
   try {
@@ -229,7 +226,6 @@ export const markNotificationRead = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
-
 
 // -------------------- Toggle Like --------------------
 export const toggleLikePost = async (req, res) => {
@@ -282,7 +278,6 @@ export const toggleLikePost = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 // -------------------- Delete Comment --------------------
 export const deleteComment = async (req, res) => {
