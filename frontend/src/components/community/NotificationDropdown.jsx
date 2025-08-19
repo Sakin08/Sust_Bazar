@@ -10,32 +10,42 @@ const NotificationDropdown = () => {
     fetchNotifications();
   }, []);
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await axios.get("/api/community/notifications");
-      setNotifications(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+ const fetchNotifications = async () => {
+  try {
+    const res = await axios.get("/api/community/notifications");
+    // Ensure you get an array
+    const data = Array.isArray(res.data) ? res.data : res.data.notifications || [];
+    setNotifications(data);
+  } catch (err) {
+    console.error(err);
+    setNotifications([]); // fallback to empty array
+  }
+};
 
   const toggleDropdown = () => setOpen(!open);
 
   const markAsRead = async (id) => {
     try {
       await axios.post(`/api/community/notifications/${id}/read`);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+      setNotifications(
+        notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
     } catch (err) {
       console.error(err);
     }
   };
 
+  // Count of unread notifications
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   return (
     <div className="relative">
       <button onClick={toggleDropdown} className="relative">
         <Bell size={24} />
-        {notifications.some(n => !n.isRead) && (
-          <span className="absolute top-0 right-0 bg-red-500 w-2 h-2 rounded-full"></span>
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 -mt-1 -mr-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+            {unreadCount}
+          </span>
         )}
       </button>
 
@@ -46,10 +56,12 @@ const NotificationDropdown = () => {
             {notifications.length === 0 && (
               <li className="p-2 text-gray-500">No notifications</li>
             )}
-            {notifications.map(n => (
+            {notifications.map((n) => (
               <li
                 key={n.id}
-                className={`p-2 border-b cursor-pointer ${n.isRead ? "bg-white" : "bg-gray-100"}`}
+                className={`p-2 border-b cursor-pointer ${
+                  n.isRead ? "bg-white" : "bg-gray-100"
+                }`}
                 onClick={() => markAsRead(n.id)}
               >
                 <p>{n.message}</p>

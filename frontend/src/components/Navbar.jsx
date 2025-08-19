@@ -12,6 +12,7 @@ import {
   ChevronDown,
   UserCircle,
 } from 'lucide-react';
+import NotificationDropdown from './community/NotificationDropdown';
 
 const NavLinks = ({ isActive, unreadCount }) => {
   const links = [
@@ -36,8 +37,6 @@ const NavLinks = ({ isActive, unreadCount }) => {
         >
           {Icon && <Icon className="inline h-4 w-4 mr-1" />}
           {label}
-
-          {/* Badge */}
           {badge > 0 && (
             <span className="absolute top-0 right-0 -mt-1 -mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
               {badge}
@@ -174,9 +173,7 @@ const Navbar = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get('http://localhost:3001/api/chats', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         let count = 0;
@@ -193,8 +190,7 @@ const Navbar = () => {
     };
 
     fetchUnreadMessages();
-
-    const interval = setInterval(fetchUnreadMessages, 3000); // refresh every 15s
+    const interval = setInterval(fetchUnreadMessages, 3000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -213,10 +209,11 @@ const Navbar = () => {
             {user ? <NavLinks isActive={isActive} unreadCount={unreadCount} /> : null}
           </div>
 
-          {/* User Menu or Auth Links */}
+          {/* User Menu & Notifications */}
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                <NotificationDropdown /> {/* Notifications Bell */}
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"
