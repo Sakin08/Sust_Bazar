@@ -14,6 +14,7 @@ import {
   Bell,
 } from 'lucide-react';
 
+// ---------------- NavLinks Component ----------------
 const NavLinks = ({ isActive, unreadCount }) => {
   const links = [
     { to: '/', label: 'Browse' },
@@ -48,6 +49,7 @@ const NavLinks = ({ isActive, unreadCount }) => {
   );
 };
 
+// ---------------- UserMenu Component ----------------
 const UserMenu = ({ user, logout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
@@ -140,6 +142,7 @@ const UserMenu = ({ user, logout }) => {
   );
 };
 
+// ---------------- AuthLinks Component ----------------
 const AuthLinks = () => (
   <div className="flex items-center space-x-4">
     <Link
@@ -164,7 +167,7 @@ const NotificationDropdown = ({ setUnreadCount }) => {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
+    const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -187,17 +190,21 @@ const NotificationDropdown = ({ setUnreadCount }) => {
     }
   };
 
-  const toggleDropdown = () => setOpen(!open);
+  const toggleDropdown = () => {
+    setOpen(!open);
+    if (!open) markAllAsRead(); // mark all as read when opening
+  };
 
-  const markAsRead = async (id) => {
+  const markAllAsRead = async () => {
     try {
-      await axios.post(`http://localhost:3001/api/community/notifications/${id}/read`);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      await Promise.all(
+        notifications.filter((n) => !n.isRead).map((n) =>
+          axios.post(`http://localhost:3001/api/community/notifications/${n.id}/read`)
+        )
       );
-      if (setUnreadCount) {
-        setUnreadCount(notifications.filter((n) => n.id !== id && !n.isRead).length);
-      }
+      const updated = notifications.map((n) => ({ ...n, isRead: true }));
+      setNotifications(updated);
+      if (setUnreadCount) setUnreadCount(0);
     } catch (err) {
       console.error(err);
     }
@@ -225,7 +232,6 @@ const NotificationDropdown = ({ setUnreadCount }) => {
                 className={`p-2 border-b cursor-pointer ${
                   n.isRead ? 'bg-white' : 'bg-gray-100'
                 }`}
-                onClick={() => markAsRead(n.id)}
               >
                 <p>{n.message}</p>
                 <span className="text-xs text-gray-400">
@@ -246,7 +252,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const isActive = (path) => location.pathname === path;
 
@@ -298,10 +303,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-4 relative">
             {user ? (
               <>
-                <NotificationDropdown setUnreadCount={setUnreadNotifications} />
-                {unreadNotifications > 0 && (
-                  <span className="absolute top-2 right-10 w-2 h-2 bg-red-500 rounded-full"></span>
-                )}
+                <NotificationDropdown setUnreadCount={setUnreadCount} />
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"
