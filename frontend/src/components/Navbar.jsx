@@ -11,8 +11,8 @@ import {
   Settings,
   ChevronDown,
   UserCircle,
+  Bell,
 } from 'lucide-react';
-import NotificationDropdown from './community/NotificationDropdown';
 
 const NavLinks = ({ isActive, unreadCount }) => {
   const links = [
@@ -157,11 +157,96 @@ const AuthLinks = () => (
   </div>
 );
 
+// ---------------- NotificationDropdown Component ----------------
+const NotificationDropdown = ({ setUnreadCount }) => {
+  const [notifications, setNotifications] = useState([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:3001/api/community/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = Array.isArray(res.data) ? res.data : res.data.notifications || [];
+      setNotifications(data);
+
+      if (setUnreadCount) {
+        const unread = data.filter((n) => !n.isRead).length;
+        setUnreadCount(unread);
+      }
+    } catch (err) {
+      console.error(err);
+      setNotifications([]);
+    }
+  };
+
+  const toggleDropdown = () => setOpen(!open);
+
+  const markAsRead = async (id) => {
+    try {
+      await axios.post(`http://localhost:3001/api/community/notifications/${id}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+      if (setUnreadCount) {
+        setUnreadCount(notifications.filter((n) => n.id !== id && !n.isRead).length);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button onClick={toggleDropdown} className="relative">
+        <Bell size={24} />
+        {notifications.some((n) => !n.isRead) && (
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg border rounded-md z-50">
+          <h3 className="font-bold p-2 border-b">Notifications</h3>
+          <ul className="max-h-64 overflow-y-auto">
+            {notifications.length === 0 && (
+              <li className="p-2 text-gray-500">No notifications</li>
+            )}
+            {notifications.map((n) => (
+              <li
+                key={n.id}
+                className={`p-2 border-b cursor-pointer ${
+                  n.isRead ? 'bg-white' : 'bg-gray-100'
+                }`}
+                onClick={() => markAsRead(n.id)}
+              >
+                <p>{n.message}</p>
+                <span className="text-xs text-gray-400">
+                  {new Date(n.createdAt).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------------- Navbar Component ----------------
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const isActive = (path) => location.pathname === path;
 
@@ -190,7 +275,7 @@ const Navbar = () => {
     };
 
     fetchUnreadMessages();
-    const interval = setInterval(fetchUnreadMessages, 3000);
+    const interval = setInterval(fetchUnreadMessages, 5000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -206,14 +291,17 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            {user ? <NavLinks isActive={isActive} unreadCount={unreadCount} /> : null}
+            {user && <NavLinks isActive={isActive} unreadCount={unreadCount} />}
           </div>
 
           {/* User Menu & Notifications */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 relative">
             {user ? (
               <>
-                <NotificationDropdown /> {/* Notifications Bell */}
+                <NotificationDropdown setUnreadCount={setUnreadNotifications} />
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-2 right-10 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
                 {user.role === 'admin' && (
                   <Link
                     to="/admin"

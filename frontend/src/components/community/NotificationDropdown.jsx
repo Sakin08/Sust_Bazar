@@ -2,50 +2,61 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Bell } from "lucide-react";
 
-const NotificationDropdown = () => {
+const NotificationDropdown = ({ setUnreadCount }) => {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
   }, []);
 
- const fetchNotifications = async () => {
-  try {
-    const res = await axios.get("/api/community/notifications");
-    // Ensure you get an array
-    const data = Array.isArray(res.data) ? res.data : res.data.notifications || [];
-    setNotifications(data);
-  } catch (err) {
-    console.error(err);
-    setNotifications([]); // fallback to empty array
-  }
-};
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("/api/community/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = Array.isArray(res.data) ? res.data : res.data.notifications || [];
+      setNotifications(data);
+
+      // Update unread count in Navbar
+      if (setUnreadCount) {
+        const unread = data.filter((n) => !n.isRead).length;
+        setUnreadCount(unread);
+      }
+    } catch (err) {
+      console.error(err);
+      setNotifications([]);
+    }
+  };
 
   const toggleDropdown = () => setOpen(!open);
 
   const markAsRead = async (id) => {
     try {
       await axios.post(`/api/community/notifications/${id}/read`);
-      setNotifications(
-        notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: true, readAt: new Date() } : n
+        )
       );
+
+      if (setUnreadCount) {
+        setUnreadCount(notifications.filter((n) => n.id !== id && !n.isRead).length);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Count of unread notifications
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
   return (
     <div className="relative">
       <button onClick={toggleDropdown} className="relative">
         <Bell size={24} />
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 -mt-1 -mr-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-            {unreadCount}
-          </span>
+        {notifications.some((n) => !n.isRead) && (
+          <span className="absolute top-0 right-0 bg-red-500 w-2 h-2 rounded-full"></span>
         )}
       </button>
 
@@ -78,3 +89,5 @@ const NotificationDropdown = () => {
 };
 
 export default NotificationDropdown;
+
+
